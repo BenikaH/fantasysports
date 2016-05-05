@@ -1,0 +1,4 @@
+chromedriver
+*.pyc
+*/**/__init__.py
+venv/*
