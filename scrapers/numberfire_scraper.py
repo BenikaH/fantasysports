@@ -27,10 +27,10 @@ def retrieve_numberfire_mlb_predictions_and_salaries():
     driver.find_element_by_id(
         'signIn').click()
     time.sleep(5)
-    table_info = driver.find_element_by_tag_name(
-        'table').get_attribute('innerHTML')
+    table_info = driver.find_element_by_id(
+        'projection-data').get_attribute('innerHTML')
     soup = BeautifulSoup(table_info, 'html5lib')
-    player_lists = soup.get_text().replace('\t', '').split('\n')[204:]
+    player_lists = soup.get_text().replace('\t', '').split('\n')
     player_lists = [el for el in player_lists if el]
     final_data = []
     index = 0
@@ -98,18 +98,6 @@ def retrieve_numberfire_nba_predictions_and_salaries():
     driver = webdriver.Chrome(conf.chromedriver_path)
     driver.get("https://www.numberfire.com/nba/daily-fantasy/daily-basketball-projections")
     time.sleep(2)
-    driver.find_element_by_id('login-google').click()
-    time.sleep(2)
-    driver.find_element_by_id(
-        'Email').send_keys(conf.google_creds['email'])
-    driver.find_element_by_id(
-        'next').click()
-    time.sleep(2)
-    driver.find_element_by_id(
-        'Passwd').send_keys(conf.google_creds['password'])
-    driver.find_element_by_id(
-        'signIn').click()
-    time.sleep(5)
     table_info = driver.find_element_by_id(
         'projection-data').get_attribute('innerHTML')
     soup = BeautifulSoup(table_info, 'html5lib')

@@ -5,7 +5,7 @@ from tabulate import tabulate
 import numpy as np
 import conf
 from util.util import is_number, lineup_dict_to_list
-from lineup_optimizers.genetics_nba import GeneticNBA
+from lineup_optimizers.genetic_nba import GeneticNBA
 import pdb
 
 batter_df_numberfire = retrieve_numberfire_nba_predictions_and_salaries()
@@ -30,7 +30,7 @@ for batter in batter_df_numberfire.iterrows():
     player_cost = float(player_info['nf_cost'].replace('$', ''))
     if player_info['nf_pos'] in position_results:
         position_results[player_info['nf_pos']].append(
-            [player_name.decode('utf-8'), player_info['nf_team'].decode('utf-8'), player_cost, player_info['nf_min'].decode('utf-8')
+            [player_name.decode('utf-8'), player_info['nf_team'].decode('utf-8'), player_cost, player_info['nf_min'].decode('utf-8'),
              player_info['nf_pred'].decode('utf-8')])
         players.append({
             "value": float(player_info['nf_pred']),
@@ -77,7 +77,7 @@ print '\n'
 
 """GENERATE LINEUPS"""
 print "\nTOP GENETIC AVERAGED LINEUPS"
-gen = GeneticNBA(conf.max_salary)
+gen = GeneticNBA(conf.nba_max_salary)
 lineups = gen.calculate(players)
 print "Number 1"
 print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
@@ -105,5 +105,8 @@ print tabulate(lineup_dict_to_list(lineups[7]), headers=['name', 'team', 'pos', 
 print '\n'
 print "Number 9"
 print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
+print '\n'
+print "Number 10"
+print tabulate(lineup_dict_to_list(lineups[9]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
 print '\n'
 

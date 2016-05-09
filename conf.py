@@ -25,6 +25,7 @@ genetic_generations = 75
 retain = 0.35
 random_select = 0.05
 mutate_chance = 0.005
+population_size = 10000
 
 """MLB-specific Genetic Settings"""
 limit_conflicting_teams = True

@@ -25,7 +25,7 @@ class GeneticMLB(object):
             "2B": [player for player in players if player['pos'] == '2B'],
             "3B": [player for player in players if player['pos'] == '3B']
         }
-        pop = self.create_population(10000, pos_players)
+        pop = self.create_population(conf.population_size, pos_players)
         fitness_history = [self.grade(pop)]
         # 40 iterations of our evolution
         for i in xrange(conf.genetic_generations):
@@ -123,7 +123,7 @@ class GeneticMLB(object):
     def fitness(self, team):
         points = self.get_team_point_total(team)
         salary = self.get_team_salary(team)
-        if salary > conf.max_salary or self._has_duplicate_players(team)\
+        if salary > self.max_salary or self._has_duplicate_players(team)\
                 or self._exceeds_max_team_count(team):
             return 0
         if conf.limit_conflicting_teams:
