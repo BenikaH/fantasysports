@@ -25,4 +25,4 @@ def calculate_fanduel_hitter_score(sing, doub, trip, walk, hbp, hr, runs, rbi, s
         + (3.0 * hbp) + (12.0 * hr) + (3.2 * runs) + (3.5 * rbi) + (6.0 * sb))
 
 def calculate_fanduel_pitcher_score(er, ip, so, win):
-    return (3.0 * er) + (6.0 * ip) + (9.0 * so) + (3.0 * win)
+    return (-3.0 * er) + (6.0 * ip) + (9.0 * so) + (12.0 * win)
