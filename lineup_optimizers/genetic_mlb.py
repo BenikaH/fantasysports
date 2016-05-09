@@ -38,11 +38,20 @@ class GeneticMLB(object):
         for datum in fitness_history:
             history.append(datum)
 
-        best_teams = sorted(best_teams, key=self.get_team_salary, reverse=True)
-        # self.print_team(choice)
-        # print self.get_team_salary(choice)
-        # print self.get_team_point_total(choice)
-        return best_teams[0:10]
+        real_best_teams = []
+        for team in best_teams:
+            if self._has_duplicate_players(team) or self.get_team_salary(team) > self.max_salary:
+                continue
+            real_best_teams.append(team)
+        if conf.sort_by == 'cost':
+            real_best_teams = sorted(real_best_teams, key=self.get_team_salary, reverse=True)
+        elif conf.sort_by == 'points':
+            real_best_teams = sorted(real_best_teams, key=self.get_team_point_total, reverse=True)
+        elif conf.sort_by == 'both':
+            real_best_teams = real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.get_team_point_total(x)), reverse=True)
+        else:
+            raise ValueError('please specify a sorting criteria of cost or points in conf.sort_by')
+        return real_best_teams[0:10]
 
     def set_max_salary(self, max_salary):
         self.max_salary = max_salary

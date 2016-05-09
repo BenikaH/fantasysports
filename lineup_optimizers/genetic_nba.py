@@ -35,9 +35,22 @@ class GeneticNBA(object):
                 best_teams.append(valid_teams[0])
         for datum in fitness_history:
             history.append(datum)
-
-        best_teams = sorted(best_teams, key=self.get_team_salary, reverse=True)
-        return best_teams[0:10]
+        real_best_teams = []
+        for team in best_teams:
+            if self._has_duplicate_players(team):
+                continue
+            else:
+                real_best_teams.append(team)
+        if conf.sort_by == 'cost':
+            real_best_teams = sorted(real_best_teams, key=self.get_team_salary, reverse=True)
+        elif conf.sort_by == 'points':
+            real_best_teams = sorted(real_best_teams, key=self.get_team_point_total, reverse=True)
+        elif conf.sort_by == 'both':
+            real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.get_team_point_total(x)), reverse=True)
+            pdb.set_trace()
+        else:
+            raise ValueError('please specify a sorting criteria of "cost," "points," or "both" in conf.sort_by')
+        return real_best_teams[0:10]
 
     def set_max_salary(self, max_salary):
         self.max_salary = max_salary
@@ -115,13 +128,8 @@ class GeneticNBA(object):
     def fitness(self, team):
         points = self.get_team_point_total(team)
         salary = self.get_team_salary(team)
-        if salary > self.max_salary or self._has_duplicate_players(team)\
-                or self._exceeds_max_team_count(team):
+        if salary > self.max_salary or self._has_duplicate_players(team):
             return 0
-        if conf.limit_conflicting_teams:
-            points -= self._playing_against_self(team)
-        if conf.same_team_bonus:
-            points += self._same_team_bonus(team)
         return points
 
     def _playing_against_self(self, team):
@@ -134,29 +142,10 @@ class GeneticNBA(object):
         conflict_instances = len(primary_teams.intersection(primary_opponents))
         return conflict_instances * conf.self_defeating_weight
 
-    def _exceeds_max_team_count(self, team):
-        primary_teams = [[x['team'] for x in team[item]] for item in team]
-        team_counts = [count for item, count in collections.Counter(
-            [t for teams in primary_teams for t in teams]).items() if count > 1]
-        for count in team_counts:
-            if count > 4:
-                return True
-        return False
-
-    def _same_team_bonus(self, team):
-        primary_teams = [[x['team'] for x in team[item]] for item in team]
-        team_counts = [count for item, count in collections.Counter(
-            [t for teams in primary_teams for t in teams]).items() if count > 1]
-        stack_bonus = 0
-        if 4 in team_counts:
-            stack_bonus += conf.stack_bonus
-        primary_teams = set([this_team for t in primary_teams for this_team in t])
-        same_team_bonus = 9 - len(primary_teams)
-        return (same_team_bonus * conf.same_team_weight) + stack_bonus
-
     def _has_duplicate_players(self, team):
-        primary_players = set([x['name'] for x in team['OF']])
-        if len(primary_players) < 3:
+        primary_players = [[x for x in team[item]] for item in team]
+        primary_players = set([player['name'] for players in primary_players for player in players])
+        if len(primary_players) < 9:
             return True
 
     def grade(self, pop):
@@ -166,10 +155,10 @@ class GeneticNBA(object):
 
     def list_to_team(self, players):
         return {
-            'PG': players[0:1],
-            'SG': players[2:3],
-            'SF': players[4:5],
-            'PF': players[6:7],
+            'PG': players[0:2],
+            'SG': players[2:4],
+            'SF': players[4:6],
+            'PF': players[6:8],
             'C': [players[8]]
         }
 
@@ -180,6 +169,8 @@ class GeneticNBA(object):
         father_list = [player for players in father_list for player in players]
 
         index = random.choice([1, 2, 3, 4, 5, 6, 7])
+        if len(mother_list[0:index] + father_list[index:]) < 9 or len(father_list[0:index] + mother_list[index:]) < 9:
+            pdb.set_trace()
         child1 = self.list_to_team(mother_list[0:index] + father_list[index:])
         child2 = self.list_to_team(father_list[0:index] + mother_list[index:])
         return[child1, child2]

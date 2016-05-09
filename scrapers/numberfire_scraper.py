@@ -1,6 +1,7 @@
 """Extracts sabersim data from sabersim.com."""
 from selenium import webdriver
 from bs4 import BeautifulSoup
+import urllib3
 import time
 import conf
 import pdb
@@ -11,26 +12,11 @@ def retrieve_numberfire_mlb_predictions_and_salaries():
     """
     MLB Projection Retrieval
     """
-    driver = webdriver.Chrome(conf.chromedriver_path)
     """HITTERS"""
-    driver.get("https://www.numberfire.com/mlb/daily-fantasy/daily-baseball-projections")
-    time.sleep(2)
-    driver.find_element_by_id('login-google').click()
-    time.sleep(2)
-    driver.find_element_by_id(
-        'Email').send_keys(conf.google_creds['email'])
-    driver.find_element_by_id(
-        'next').click()
-    time.sleep(2)
-    driver.find_element_by_id(
-        'Passwd').send_keys(conf.google_creds['password'])
-    driver.find_element_by_id(
-        'signIn').click()
-    time.sleep(5)
-    table_info = driver.find_element_by_id(
-        'projection-data').get_attribute('innerHTML')
-    soup = BeautifulSoup(table_info, 'html5lib')
-    player_lists = soup.get_text().replace('\t', '').split('\n')
+    http = urllib3.PoolManager()
+    r = http.request('GET', 'https://www.numberfire.com/mlb/daily-fantasy/daily-baseball-projections')
+    soup = BeautifulSoup(r.data, 'html5lib')
+    player_lists = soup.find(id='projection-data').get_text().replace('\t', '').split('\n')
     player_lists = [el for el in player_lists if el]
     final_data = []
     index = 0
@@ -57,22 +43,21 @@ def retrieve_numberfire_mlb_predictions_and_salaries():
                  'nf_rbi', 'nf_sb', 'nf_so', 'nf_avg', 'nf_pred', 'nf_cost',
                  'nf_value'])
     """PITCHERS"""
-    driver.get("https://www.numberfire.com/mlb/daily-fantasy/daily-baseball-projections/pitchers")
+    r = http.request('GET', 'https://www.numberfire.com/mlb/daily-fantasy/daily-baseball-projections')
+    soup = BeautifulSoup(r.data, 'html5lib')
     time.sleep(4)
-    table_info = driver.find_element_by_id(
-        'projection-data').get_attribute('innerHTML')
-    soup = BeautifulSoup(table_info, 'html5lib')
-    pitcher_lists = soup.get_text().replace('\t', '').split('\n')
+    pitcher_lists = soup.find(id='projection-data').get_text().replace('\t', '').split('\n')
     pitcher_lists = [el for el in pitcher_lists if el]
     pitcher_data = []
     index = 0
     while index < len(pitcher_lists):
-        entry = pitcher_lists[index + 2:index + 19]
+        entry = pitcher_lists[index + 2:index + 20]
         if 'OUT' not in entry:
             pitcher_data.append(entry)
-            index += 19
-        else:
             index += 20
+        else:
+            index += 21
+    pdb.set_trace()
     # split up the player info
     for idx, player in enumerate(pitcher_data):
         split_info = pitcher_data[idx][0].replace(')', '').split(' (')
@@ -84,10 +69,9 @@ def retrieve_numberfire_mlb_predictions_and_salaries():
     # build data frame
     pitcher_data_frame = pd.DataFrame(pitcher_data, index=names,
         columns=['nf_pos', 'nf_team', 'nf_name', 'nf_opp_team', 'nf_gametime',
-                 'nf_w_l', 'nf_sv', 'nf_ip', 'nf_h', 'nf_er', 'nf_hr', 'nf_so',
+                 'nf_w', 'nf_l', 'nf_sv', 'nf_ip', 'nf_h', 'nf_er', 'nf_hr', 'nf_so',
                  'nf_bb', 'nf_era', 'nf_whip', 'nf_pred', 'nf_cost',
                  'nf_value'])
-    driver.quit()
     return batter_data_frame, pitcher_data_frame
 
 
@@ -101,6 +85,7 @@ def retrieve_numberfire_nba_predictions_and_salaries():
     table_info = driver.find_element_by_id(
         'projection-data').get_attribute('innerHTML')
     soup = BeautifulSoup(table_info, 'html5lib')
+    driver.quit()
     player_lists = soup.get_text().replace('\t', '').split('\n')
     player_lists = [el for el in player_lists if el]
     player_data = []
@@ -112,7 +97,6 @@ def retrieve_numberfire_nba_predictions_and_salaries():
             index += 15
         else:
             index += 16
-    pdb.set_trace()
     # split up the player info
     for idx, player in enumerate(player_data):
         split_info = player_data[idx][0].replace(')', '').split(' (')

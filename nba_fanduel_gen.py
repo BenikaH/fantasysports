@@ -31,7 +31,7 @@ for batter in batter_df_numberfire.iterrows():
     if player_info['nf_pos'] in position_results:
         position_results[player_info['nf_pos']].append(
             [player_name.decode('utf-8'), player_info['nf_team'].decode('utf-8'), player_cost, player_info['nf_min'].decode('utf-8'),
-             player_info['nf_pred'].decode('utf-8')])
+             float(player_info['nf_pred'].decode('utf-8'))])
         players.append({
             "value": float(player_info['nf_pred']),
             "cost": player_cost,
