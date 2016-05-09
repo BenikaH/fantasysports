@@ -1,4 +1,6 @@
 """Configuration file."""
+
+"""Account Credentials"""
 sabersim_creds = {
     "username": "kevin.a.meurer@gmail.com",
     "password": "cowbell1"
@@ -9,27 +11,32 @@ google_creds = {
     "password": "cowbell453"
 }
 
+"""Local Paths"""
 chromedriver_path = './chromedriver'
 
-# 'nfl', 'nba', or 'mlb'
-sport_type = 'mlb'
-max_salary = 35000
+"""General Info"""
+nba_max_salary = 60000
+mlb_max_salary = 35000
 
 # determines how much negative weight to assign to
 # teams that play themselves
+"""General Genetic Settings"""
 genetic_generations = 75
+retain = 0.35
+random_select = 0.05
+mutate_chance = 0.005
 
+"""MLB-specific Genetic Settings"""
 limit_conflicting_teams = True
 self_defeating_weight = 5.0
-
 same_team_bonus = True
 same_team_weight = 5.0
 stack_bonus = 25.0
 min_different_teams = 3
-
 excluded_pitchers = []
 excluded_batters = ['Welington Castillo', 'Jacoby Ellsbury']
 excluded_teams = ['OAK', 'NYY']
 
+"""NBA-specific Genetic Settings"""
 excluded_nba_players = []
 excluded_nba_teams = []

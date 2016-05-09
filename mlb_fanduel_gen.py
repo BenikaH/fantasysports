@@ -145,7 +145,7 @@ print tabulate(sorted(position_results['OF'], key=lambda player: player[5],
 
 """GENERATE LINEUPS"""
 print "\nTOP GENETIC AVERAGED LINEUPS"
-gen = GeneticMLB(conf.max_salary)
+gen = GeneticMLB(conf.mlb_max_salary)
 lineups = gen.calculate(players)
 print "Number 1"
 print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
@@ -206,6 +206,6 @@ print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 
 print '\n'
 
 print "TOP KNAPSACK LINEUP"
-ks = Knapsack(conf.max_salary)
+ks = Knapsack(conf.mlb_max_salary)
 print tabulate(ks.calculate(players), tablefmt="pretty")
 print'\n'

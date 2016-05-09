@@ -3,7 +3,6 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 import conf
-# import re
 import pdb
 import pandas as pd
 
@@ -136,7 +135,7 @@ def retrieve_numberfire_nba_predictions_and_salaries():
     player_data = [item[1:] for item in player_data]
     # build data frame
     player_data_frame = pd.DataFrame(player_data, index=names,
-        columns=['nf_pos', 'nf_team', 'nf_name', 'nf_opp_team',
-                 'nf_min', 'nf_pts', 'nf_reb', 'nf_ast', 'nf_stl', 'nf_blk', 'nf_to',
+        columns=['nf_pos', 'nf_team', 'nf_name', 'nf_opp_team', 'nf_min',
+                 'nf_pts', 'nf_reb', 'nf_ast', 'nf_stl', 'nf_blk', 'nf_to',
                  'nf_pred', 'nf_cost', 'nf_value'])
     return player_data_frame

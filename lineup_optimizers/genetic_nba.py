@@ -7,7 +7,7 @@ import math
 from operator import add
 
 
-class GeneticsMLB(object):
+class GeneticNBA(object):
 
     def __init__(cls, max_salary):
         cls.max_salary = max_salary
@@ -195,7 +195,6 @@ class GeneticsMLB(object):
         index = random.choice([1, 2, 3, 4, 5, 6, 7, 8])
         child1 = self.list_to_team(mother_list[0:index] + father_list[index:])
         child2 = self.list_to_team(father_list[0:index] + mother_list[index:])
-        # pdb.set_trace()
         return[child1, child2]
 
     def mutate(self, team, sample):

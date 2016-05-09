@@ -87,7 +87,8 @@ class GeneticMLB(object):
         print team['OF'][1]
         print team['OF'][2]
 
-    def evolve(self, pop, sample, retain=0.35, random_select=0.05, mutate_chance=0.005):
+    def evolve(self, pop, sample, retain=conf.retain,
+    		   random_select=conf.random_select, mutate_chance=conf.mutate_chance):
         graded = [(self.fitness(team), team) for team in pop]
         graded = [x[1] for x in sorted(graded, reverse=True)]
         retain_length = int(len(graded) * retain)

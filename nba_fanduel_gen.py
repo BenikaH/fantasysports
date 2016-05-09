@@ -19,8 +19,6 @@ position_results = {
 }
 
 players = []
-players_ss = []
-
 """PLAYER CONSOLIDATION"""
 for batter in batter_df_numberfire.iterrows():
     player_info = batter[1]
