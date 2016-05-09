@@ -7,7 +7,7 @@ from tabulate import tabulate
 import numpy as np
 import conf
 from util import is_number, lineup_dict_to_list
-from lineup_optimizers.genetic_mlb import GeneticsMLB
+from lineup_optimizers.genetic_mlb import GeneticMLB
 from lineup_optimizers.knapsack_mlb import Knapsack
 import pdb
 
@@ -145,7 +145,7 @@ print tabulate(sorted(position_results['OF'], key=lambda player: player[5],
 
 """GENERATE LINEUPS"""
 print "\nTOP GENETIC AVERAGED LINEUPS"
-gen = GeneticsMLB(conf.max_salary)
+gen = GeneticMLB(conf.max_salary)
 lineups = gen.calculate(players)
 print "Number 1"
 print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")

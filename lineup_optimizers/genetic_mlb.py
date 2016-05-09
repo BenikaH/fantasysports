@@ -7,7 +7,7 @@ import math
 from operator import add
 
 
-class GeneticsMLB(object):
+class GeneticMLB(object):
 
     def __init__(cls, max_salary):
         cls.max_salary = max_salary

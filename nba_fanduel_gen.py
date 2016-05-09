@@ -5,7 +5,7 @@ from tabulate import tabulate
 import numpy as np
 import conf
 from util import is_number, lineup_dict_to_list
-from lineup_optimizer import Knapsack, GeneticsMLB
+from lineup_optimizers.genetics_nba import GeneticNBA
 import pdb
 
 batter_df_numberfire = retrieve_numberfire_nba_predictions_and_salaries()
@@ -21,7 +21,7 @@ position_results = {
 players = []
 players_ss = []
 
-"""BATTER CONSOLIDATION"""
+"""PLAYER CONSOLIDATION"""
 for batter in batter_df_numberfire.iterrows():
     player_info = batter[1]
     player_name = batter[0]
@@ -79,7 +79,7 @@ print '\n'
 
 """GENERATE LINEUPS"""
 print "\nTOP GENETIC AVERAGED LINEUPS"
-gen = GeneticsNBA(conf.max_salary)
+gen = GeneticNBA(conf.max_salary)
 lineups = gen.calculate(players)
 print "Number 1"
 print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
@@ -109,37 +109,3 @@ print "Number 9"
 print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
 print '\n'
 
-print "TOP GENETIC SABERSIM LINEUPS"
-lineups = gen.calculate(players_ss)
-print "Number 1"
-print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
-print '\n'
-print "Number 2"
-print tabulate(lineup_dict_to_list(lineups[1]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 3"
-print tabulate(lineup_dict_to_list(lineups[2]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 4"
-print tabulate(lineup_dict_to_list(lineups[3]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 5"
-print tabulate(lineup_dict_to_list(lineups[4]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 6"
-print tabulate(lineup_dict_to_list(lineups[5]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 7"
-print tabulate(lineup_dict_to_list(lineups[6]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 8"
-print tabulate(lineup_dict_to_list(lineups[7]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 9"
-print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-
-print "TOP KNAPSACK LINEUP"
-ks = Knapsack(conf.max_salary)
-print tabulate(ks.calculate(players), tablefmt="pretty")
-print'\n'
