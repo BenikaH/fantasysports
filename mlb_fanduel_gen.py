@@ -2,11 +2,11 @@
 from scrapers.sabersim_scraper import retrieve_saber_sim_player_predictions
 from scrapers.numberfire_scraper import\
     retrieve_numberfire_mlb_predictions_and_salaries
-from score_calculators import calculate_fanduel_hitter_score, calculate_fanduel_pitcher_score
+from util.score_calculators import calculate_fanduel_hitter_score, calculate_fanduel_pitcher_score
 from tabulate import tabulate
 import numpy as np
 import conf
-from util import is_number, lineup_dict_to_list
+from util.util import is_number, lineup_dict_to_list
 from lineup_optimizers.genetic_mlb import GeneticMLB
 from lineup_optimizers.knapsack_mlb import Knapsack
 import pdb

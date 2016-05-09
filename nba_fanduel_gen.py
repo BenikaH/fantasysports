@@ -4,7 +4,7 @@ from scrapers.numberfire_scraper import\
 from tabulate import tabulate
 import numpy as np
 import conf
-from util import is_number, lineup_dict_to_list
+from util.util import is_number, lineup_dict_to_list
 from lineup_optimizers.genetics_nba import GeneticNBA
 import pdb
 
