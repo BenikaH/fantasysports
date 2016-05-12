@@ -47,7 +47,6 @@ class GeneticNBA(object):
             real_best_teams = sorted(real_best_teams, key=self.get_team_point_total, reverse=True)
         elif conf.sort_by == 'both':
             real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.get_team_point_total(x)), reverse=True)
-            pdb.set_trace()
         else:
             raise ValueError('please specify a sorting criteria of "cost," "points," or "both" in conf.sort_by')
         return real_best_teams[0:10]
