@@ -83,6 +83,9 @@ for batter in merged_batter_df.iterrows():
     else:
         continue
     player_cost = float(batter_info['rg_cost'].replace('$', ''))
+    if player_cost == 0.0:
+        print batter_name
+        continue
     if batter_info['rg_pos'] in position_results:
         position_results[batter_info['rg_pos']].append(
             [batter_name.decode('utf-8'), batter_info['rg_team'].decode('utf-8'), player_cost, ss_score,
