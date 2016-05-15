@@ -142,16 +142,47 @@ class GeneticMLB(object):
         return parents
 
     def fitness(self, team):
-        points = self.get_team_point_total(team)
-        salary = self.get_team_salary(team)
-        if salary > self.max_salary or self._has_duplicate_players(team)\
-                or self._exceeds_max_team_count(team):
+        if self._violates_limits(team):
             return 0
-        if conf.limit_conflicting_teams:
-            points -= self._playing_against_self(team)
-        if conf.same_team_bonus:
-            points += self._same_team_bonus(team)
-        return points
+        return self.get_team_point_total(team) -\
+            self._get_point_deductions(team) + self._get_point_bonuses(team)
+
+    ####################
+    # LIMIT VIOLATIONS #
+    ####################
+    def _violates_limits(self, team):
+        if self.get_team_salary(team) > self.max_salary or\
+                self._has_duplicate_players(team)\
+                or self._exceeds_max_team_count(team):
+            return True
+        else:
+            return False
+
+    def _exceeds_max_team_count(self, team):
+        primary_teams = [[x['team'] for x in team[item]] for item in team]
+        team_counts = [count for item, count in collections.Counter(
+            [t for teams in primary_teams for t in teams]).items()
+            if count > 1]
+        for count in team_counts:
+            if count > 4:
+                return True
+        return False
+
+    def _has_duplicate_players(self, team):
+        # gives us a set of all the names
+        primary_players = set([player for players in [[
+            x['name'] for x in team[key]] for key in team]
+            for player in players])
+        if conf.site == 'fanduel' and len(primary_players) < 9:
+            return True
+        elif conf.site == 'draftkings' and len(primary_players) < 10:
+            return True
+
+    ####################
+    # POINT DEDUCTIONS #
+    ####################
+    def _get_point_deductions(self, team):
+        return self._playing_against_self(team)
 
     def _playing_against_self(self, team):
         'Returns a negative weight for conflicting teams'
@@ -165,15 +196,11 @@ class GeneticMLB(object):
         conflict_instances = len(primary_teams.intersection(primary_opponents))
         return conflict_instances * conf.self_defeating_weight
 
-    def _exceeds_max_team_count(self, team):
-        primary_teams = [[x['team'] for x in team[item]] for item in team]
-        team_counts = [count for item, count in collections.Counter(
-            [t for teams in primary_teams for t in teams]).items()
-            if count > 1]
-        for count in team_counts:
-            if count > 4:
-                return True
-        return False
+    #################
+    # POINT BONUSES #
+    #################
+    def _get_point_bonuses(self, team):
+        return self._same_team_bonus(team)
 
     def _same_team_bonus(self, team):
         primary_teams = [t for teams in [[x['team'] for x in team[item]]
@@ -193,17 +220,7 @@ class GeneticMLB(object):
         same_team_bonus = 9 - len(primary_teams)
         # if same_team_bonus > (9 - conf.min_different_teams):
         #     return 0
-        return (same_team_bonus * conf.same_team_weight) + stack_bonus
-
-    def _has_duplicate_players(self, team):
-        # gives us a set of all the names
-        primary_players = set([player for players in [[
-            x['name'] for x in team[key]] for key in team]
-            for player in players])
-        if conf.site == 'fanduel' and len(primary_players) < 9:
-            return True
-        elif conf.site == 'draftkings' and len(primary_players) < 10:
-            return True
+        return (same_team_bonus * conf.same_team_bonus_weight) + stack_bonus
 
     def grade(self, pop):
         'Find average fitness for a population.'

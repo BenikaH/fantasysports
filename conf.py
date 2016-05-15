@@ -62,16 +62,14 @@ population_size = 10000
 """
 
 """MLB-specific Genetic Settings"""
-limit_conflicting_teams = True
 self_defeating_weight = 3.0
-same_team_bonus = True
-same_team_weight = 3.0
+same_team_bonus_weight = 3.0
 stack_bonus = 20.0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
-excluded_teams = ['CLE', 'MIN', 'OAK', 'BOS', 'HOU', 'TBR', 'CHC', 'CWS', 'NYY']
+excluded_teams = []
 
 
 """NBA-specific Genetic Settings"""

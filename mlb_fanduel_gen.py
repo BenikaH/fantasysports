@@ -94,7 +94,7 @@ for batter in merged_batter_df.iterrows():
         elif is_number(ss_score):
             avg_score = ss_score
         elif is_number(batter_info['nf_pred']):
-            avg_score = float(batter_info['nf_pred']
+            avg_score = float(batter_info['nf_pred'])
         else:
             continue
     player_cost = float(batter_info['rg_cost'].replace('$', ''))
