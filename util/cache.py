@@ -1,12 +1,9 @@
 """Function to cache data"""
 import cPickle as pickle
 import os
-from log_conf import Logger
 import hashlib
 import re
 import conf
-
-logger = Logger(__file__.split('/')[-1]).logger
 
 
 def cache_disk(cache_folder=conf.cache_path, cache_comment=None):
@@ -27,7 +24,7 @@ def cache_disk(cache_folder=conf.cache_path, cache_comment=None):
             m.update(f.__class__.__name__)
             key = m.hexdigest()
             if not os.path.exists(cache_folder):
-                logger.info('[cache] creating directory %s' % cache_folder)
+                print '[cache] creating directory %s' % cache_folder
                 os.makedirs(cache_folder)
 
             filepath = os.path.join(cache_folder, key if cache_comment is None
@@ -36,13 +33,11 @@ def cache_disk(cache_folder=conf.cache_path, cache_comment=None):
             # old
             if os.path.exists(filepath):
                 result = pickle.load(open(filepath, "rb"))
-                logger.info('[cache] loaded cached result: %s' %
-                            os.path.abspath(filepath))
+                print '[cache] loaded cached result: %s' % os.path.abspath(filepath)
 
             # call the decorated function...
             else:
-                logger.info('[cache] creating cache: %s' %
-                            os.path.abspath(filepath))
+                print '[cache] creating cache: %s' % os.path.abspath(filepath)
                 result = f(*args, **kwargs)
                 pickle.dump(result, open(filepath, "wb"))
 

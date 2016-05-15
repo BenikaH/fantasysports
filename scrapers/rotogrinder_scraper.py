@@ -50,3 +50,31 @@ def retrieve_rotogrinder_nba_projections():
     player_data_frame = pd.DataFrame(player_info, index=names,
         columns=['rg_cost', 'rg_team', 'rg_pos', 'rg_opp_team', 'rg_ceil', 'rg_floor', 'rg_pred'])
     return player_data_frame
+
+
+def retrieve_mlb_batting_order():
+    batting_orders = {}
+    http = urllib3.PoolManager()
+    r = http.urlopen('GET', 'https://rotogrinders.com/lineups/mlb?site=fanduel', preload_content=False)
+    soup = BeautifulSoup(r.data, 'html5lib')
+    container = soup.find('ul', class_='lineup')
+    cards = container.find_all('li')
+    for card in cards:
+        team_names = card.find_all('span', class_='team-name')
+        try:
+            away_team = team_names[0].find(class_='shrt').get_text()
+        except:
+            continue
+        away_players = card.find('div', class_='away-team').find('ul', class_='players').find_all('li', class_='player')
+        away_order = []
+        for player in away_players:
+            away_order.append(player.find('a').get_text())
+        home_team = team_names[1].find(class_='shrt').get_text()
+        home_players = card.find('div', class_='home-team').find('ul', class_='players').find_all('li', class_='player')
+        home_order = []
+        for player in home_players:
+            home_order.append(player.find('a').get_text())
+        batting_orders[away_team] = away_order
+        batting_orders[home_team] = home_order
+    print batting_orders
+    return batting_orders

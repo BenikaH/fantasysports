@@ -3,7 +3,7 @@ from scrapers.sabersim_scraper import retrieve_saber_sim_player_predictions
 from scrapers.numberfire_scraper import\
     retrieve_numberfire_mlb_predictions_and_salaries
 from scrapers.rotogrinder_scraper import\
-    retrieve_rotogrinder_mlb_projections
+    retrieve_rotogrinder_mlb_projections, retrieve_mlb_batting_order
 from util.score_calculators import calculate_fanduel_hitter_score,\
     calculate_draftkings_hitter_score
 from tabulate import tabulate
@@ -20,6 +20,10 @@ batter_df_sabersim = retrieve_saber_sim_player_predictions()
 merged_batter_df = batter_df_rotogrinders.join(batter_df_sabersim, on=None,
                                                how='left', lsuffix='_nf',
                                                rsuffix='_ss')
+
+if conf.use_batting_orders:
+    conf.batting_orders = retrieve_mlb_batting_order()
+
 
 if conf.site == 'fanduel':
     batter_df_numberfire, pitcher_df_numberfire =\
@@ -44,6 +48,7 @@ position_results = {
 players = []
 players_ss = []
 players_rg = []
+players_nf = []
 
 """BATTER CONSOLIDATION"""
 print merged_batter_df
@@ -70,18 +75,28 @@ for batter in merged_batter_df.iterrows():
     else:
         raise ValueError('Please choose either "fanduel" or "draftkings" in conf.site.')
     avg_score = None
-    if is_number(ss_score) and is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
-        avg_score = np.mean([float(ss_score), float(batter_info['rg_pred']), float(batter_info['nf_pred'])])
-    elif is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
-        avg_score = np.mean([float(batter_info['rg_pred']), float(batter_info['nf_pred'])])
-    elif is_number(ss_score) and is_number(batter_info['nf_pred']):
-        avg_score = np.mean([float(ss_score), float(batter_info['nf_pred'])])
-    elif is_number(batter_info['rg_pred']) and is_number(ss_score):
-        avg_score = np.mean([float(batter_info['rg_pred']), ss_score])
-    elif is_number(ss_score):
-        avg_score = ss_score
+    if conf.use_rotogrinder_scores == True:
+        if is_number(ss_score) and is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
+            avg_score = np.mean([float(ss_score), float(batter_info['rg_pred']), float(batter_info['nf_pred'])])
+        elif is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
+            avg_score = np.mean([float(batter_info['rg_pred']), float(batter_info['nf_pred'])])
+        elif is_number(ss_score) and is_number(batter_info['nf_pred']):
+            avg_score = np.mean([float(ss_score), float(batter_info['nf_pred'])])
+        elif is_number(batter_info['rg_pred']) and is_number(ss_score):
+            avg_score = np.mean([float(batter_info['rg_pred']), ss_score])
+        elif is_number(ss_score):
+            avg_score = ss_score
+        else:
+            continue
     else:
-        continue
+        if is_number(ss_score) and is_number(batter_info['nf_pred']):
+            avg_score = np.mean([float(ss_score), float(batter_info['nf_pred'])])
+        elif is_number(ss_score):
+            avg_score = ss_score
+        elif is_number(batter_info['nf_pred']):
+            avg_score = float(batter_info['nf_pred']
+        else:
+            continue
     player_cost = float(batter_info['rg_cost'].replace('$', ''))
     if player_cost == 0.0:
         print batter_name
@@ -116,6 +131,15 @@ for batter in merged_batter_df.iterrows():
                 "team": batter_info['rg_team'],
                 "opp": batter_info['rg_opp_team'].replace('@', '')
             })
+        if is_number(batter_info['nf_pred']):
+            players_nf.append({
+                "value": float(batter_info['nf_pred']),
+                "cost": player_cost,
+                "pos": batter_info['nf_pos'],
+                "name": batter_name,
+                "team": batter_info['nf_team'],
+                "opp": batter_info['rg_opp_team'].replace('@', '')
+            })
 
 """PITCHER CALCULATIONS"""
 pitchers_overall = []
@@ -127,14 +151,17 @@ for pitcher in merged_pitcher_df.iterrows():
             pitcher_info['rg_team'] in conf.excluded_teams:
         continue
     avg_score = None
-    if conf.site == 'draftkings':
-        avg_score = float(pitcher_info['rg_pred'])
-    elif is_number(pitcher_info['nf_pred']) and is_number(pitcher_info['rg_pred']):
-        avg_score = np.mean([float(pitcher_info['nf_pred']), float(pitcher_info['rg_pred'])])
-    elif is_number(pitcher_info['rg_pred']):
-        avg_score = float(pitcher_info['rg_pred'])
+    if conf.use_rotogrinder_scores:
+        if conf.site == 'draftkings':
+            avg_score = float(pitcher_info['rg_pred'])
+        elif is_number(pitcher_info['nf_pred']) and is_number(pitcher_info['rg_pred']):
+            avg_score = np.mean([float(pitcher_info['nf_pred']), float(pitcher_info['rg_pred'])])
+        elif is_number(pitcher_info['rg_pred']):
+            avg_score = float(pitcher_info['rg_pred'])
+        else:
+            continue
     else:
-        continue
+        avg_score = float(pitcher_info['nf_pred'])
     players.append({
         "value": avg_score,
         "cost": pitcher_cost,
@@ -153,6 +180,14 @@ for pitcher in merged_pitcher_df.iterrows():
     })
     players_rg.append({
         "value": float(pitcher_info['rg_pred']),
+        "cost": pitcher_cost,
+        "pos": 'P',
+        "name": pitcher_name,
+        "team": pitcher_info['rg_team'],
+        "opp": pitcher_info['rg_opp_team']
+    })
+    players_nf.append({
+        "value": float(pitcher_info['nf_pred']),
         "cost": pitcher_cost,
         "pos": 'P',
         "name": pitcher_name,
@@ -239,15 +274,6 @@ print '\n'
 print "Number 6"
 print tabulate(lineup_dict_to_list(lineups[5]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
 print '\n'
-print "Number 7"
-print tabulate(lineup_dict_to_list(lineups[6]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 8"
-print tabulate(lineup_dict_to_list(lineups[7]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 9"
-print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
 
 print "TOP GENETIC SABERSIM LINEUPS WITH CURRENT SETTINGS"
 lineups = gen.calculate(players_ss)
@@ -272,14 +298,27 @@ print '\n'
 print "Number 7"
 print tabulate(lineup_dict_to_list(lineups[6]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
 print '\n'
-print "Number 8"
-print tabulate(lineup_dict_to_list(lineups[7]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 9"
-print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
 
-print "TOP GENETIC ROTOGRINDERS LINEUPS WITH CURRENT SETTINGS"
+if conf.use_rotogrinder_scores:
+    print "TOP GENETIC ROTOGRINDERS LINEUPS WITH CURRENT SETTINGS"
+    lineups = gen.calculate(players_rg)
+    print "Number 1"
+    print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
+    print '\n'
+    print "Number 2"
+    print tabulate(lineup_dict_to_list(lineups[1]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
+    print '\n'
+    print "Number 3"
+    print tabulate(lineup_dict_to_list(lineups[2]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
+    print '\n'
+    print "Number 4"
+    print tabulate(lineup_dict_to_list(lineups[3]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
+    print '\n'
+    print "Number 5"
+    print tabulate(lineup_dict_to_list(lineups[4]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
+    print '\n'
+
+print "TOP GENETIC NUMBERFIRE LINEUPS WITH CURRENT SETTINGS"
 lineups = gen.calculate(players_rg)
 print "Number 1"
 print tabulate(lineup_dict_to_list(lineups[0]), headers=['name', 'team', 'pos', 'cost', 'points'], tablefmt="pretty")
@@ -296,16 +335,3 @@ print '\n'
 print "Number 5"
 print tabulate(lineup_dict_to_list(lineups[4]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
 print '\n'
-print "Number 6"
-print tabulate(lineup_dict_to_list(lineups[5]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 7"
-print tabulate(lineup_dict_to_list(lineups[6]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 8"
-print tabulate(lineup_dict_to_list(lineups[7]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-print "Number 9"
-print tabulate(lineup_dict_to_list(lineups[8]), headers=['name', 'team', 'pos', 'cost', 'points'],tablefmt="pretty")
-print '\n'
-

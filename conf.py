@@ -1,4 +1,5 @@
 """Configuration file."""
+import os
 
 """Account Credentials"""
 sabersim_creds = {
@@ -35,6 +36,7 @@ if site == 'fanduel':
     mlb_max_salary = 35000
 elif site == 'draftkings':
     mlb_max_salary = 50000
+use_rotogrinder_scores = False
 
 # determines how much negative weight to assign to
 # teams that play themselves
@@ -64,13 +66,13 @@ limit_conflicting_teams = True
 self_defeating_weight = 3.0
 same_team_bonus = True
 same_team_weight = 3.0
-stack_bonus = 15.0
+stack_bonus = 20.0
+use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
-excluded_batters = ['Kirk Nieuwenhuis', 'Dustin Ackley', 'Alex Presley']
-excluded_teams = [] #['BAL', 'MIN', 'SDP', 'CHC', 'CWS', 'TEX',
-                  # 'CLE', 'HOU', 'ARI', 'COL', 'TB', 'SEA',
-                  # 'TOR', 'SF']
+excluded_batters = []
+excluded_teams = ['CLE', 'MIN', 'OAK', 'BOS', 'HOU', 'TBR', 'CHC', 'CWS', 'NYY']
+
 
 """NBA-specific Genetic Settings"""
 excluded_nba_players = []
