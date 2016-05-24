@@ -69,3 +69,41 @@ favored_teams = []
 """NBA-specific Genetic Settings"""
 excluded_nba_players = []
 excluded_nba_teams = []
+
+short_to_long_names = {
+    'OAK': 'Athletics',
+    'LAA': 'Angels',
+    'NYM': 'Mets',
+    'KCR': 'Royals',
+    'KC': 'Royals',
+    'TOR': 'Blue Jays',
+    'CIN': 'Reds',
+    'LAD': 'Dodgers',
+    'SD': 'Padres',
+    'SDP': 'Padres',
+    'SF': 'Giants',
+    'SFG': 'Giants',
+    'NYY': 'Yankees',
+    'CHC': 'Cubs',
+    'CHW': 'White Sox',
+    'BOS': 'Red Sox'
+}
+
+long_to_short_names = {
+    'Athletics': 'OAK',
+    'Angels': 'LAA',
+    'Mets': 'NYM',
+    'Royals': 'KCR',
+    'Royals': 'KC',
+    'Blue Jays': 'TOR',
+    'Reds': 'CIN',
+    'Dodgers': 'LAD',
+    'Padres': 'SD',
+    'Padres': 'SDP',
+    'Giants': 'SF',
+    'Giants': 'SFG',
+    'Yankees': 'NYY',
+    'Cubs': 'CHC',
+    'White Sox': 'CHW',
+    'Red Sox': 'BOS'
+}
