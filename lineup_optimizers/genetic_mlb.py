@@ -3,7 +3,7 @@ import collections
 import conf
 import pdb
 import random
-import math
+import numpy as np
 from operator import add
 
 
@@ -13,6 +13,9 @@ class GeneticMLB(object):
         cls.max_salary = max_salary
         cls.team = None
 
+    ###############
+    # MAIN RUNNER #
+    ###############
     def calculate(self, players):
         best_teams = []
         history = []
@@ -40,7 +43,9 @@ class GeneticMLB(object):
 
         real_best_teams = []
         for team in best_teams:
-            if self._has_duplicate_players(team) or self.get_team_salary(team) > self.max_salary or team in real_best_teams:
+            if self._has_duplicate_players(team) or self.get_team_salary(team)\
+                    > self.max_salary or team in real_best_teams or\
+                    self._violates_limits(team):
                 continue
             real_best_teams.append(team)
         if conf.sort_by == 'cost':
@@ -48,7 +53,9 @@ class GeneticMLB(object):
         elif conf.sort_by == 'points':
             real_best_teams = sorted(real_best_teams, key=lambda x: self.get_team_point_total(x), reverse=True)
         elif conf.sort_by == 'cost-points':
-            real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.get_team_point_total(x)), reverse=True)
+            real_best_teams = sorted(real_best_teams, key=lambda x: (
+                self.get_team_salary(x), self.get_team_point_total(x)),
+                reverse=True)
         elif conf.sort_by == 'cost-fitness':
             real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.fitness(x)), reverse=True)
         elif conf.sort_by == 'fitness':
@@ -82,10 +89,7 @@ class GeneticMLB(object):
         total_points = 0
         for pos, players in team.iteritems():
             for player in players:
-                try:
-                    total_points += player["value"]
-                except:
-                    pdb.set_trace()
+                total_points += player["value"]
         return total_points
 
     def get_team_salary(self, team):
@@ -164,7 +168,9 @@ class GeneticMLB(object):
             [t for teams in primary_teams for t in teams]).items()
             if count > 1]
         for count in team_counts:
-            if count > 4:
+            if conf.site == 'fanduel' and count > 4:
+                return True
+            if conf.site == 'draftkings' and count > 5:
                 return True
         return False
 
@@ -186,7 +192,7 @@ class GeneticMLB(object):
 
     def _playing_against_self(self, team):
         'Returns a negative weight for conflicting teams'
-        # gets a flattened array of the teams on our team
+        # gets a flattened set of the teams on our team
         primary_teams = set([this_team for t in [[
             x['team'] for x in team[item]] for item in team]
             for this_team in t])
@@ -200,27 +206,87 @@ class GeneticMLB(object):
     # POINT BONUSES #
     #################
     def _get_point_bonuses(self, team):
-        return self._same_team_bonus(team)
-
-    def _same_team_bonus(self, team):
         primary_teams = [t for teams in [[x['team'] for x in team[item]]
                          for item in team] for t in teams]
-        primary_teams.remove(team['P'][0]['team'])
+        primary_teams_set = set(primary_teams)
+        # reward teams that favor one team via fewer different teams
+        same_team_bonus = self._get_same_team_bonus(primary_teams_set)
+        stack_bonus = self._get_stack_bonus(team, primary_teams)
+        return same_team_bonus + stack_bonus
+
+    def _get_same_team_bonus(self, team_set):
+        '''
+        Return the value of the "same team bonus."
+        team_set: a set of all the team's different teams
+        '''
+        return (9 - len(team_set)) * conf.same_team_bonus_weight
+
+
+    def _get_stack_bonus(self, team, teams_list):
+        '''Return the stack bonus.'''
+        # remove pitchers, as they don't count in a stack
+        teams_list.remove(team['P'][0]['team'])
         if conf.site == 'draftkings':
-            primary_teams.remove(team['P'][1]['team'])
-        team_counts = [count for item, count in collections.Counter(
-            primary_teams).items()
-            if count > 1]
-        stack_bonus = 0
-        if 4 in team_counts and team['P'][0]['team'] not in primary_teams:
-            stack_bonus += conf.stack_bonus
-        primary_teams = [[x['team'] for x in team[item]] for item in team]
-        primary_teams = set(
-            [this_team for t in primary_teams for this_team in t])
-        same_team_bonus = 9 - len(primary_teams)
-        # if same_team_bonus > (9 - conf.min_different_teams):
-        #     return 0
-        return (same_team_bonus * conf.same_team_bonus_weight) + stack_bonus
+            teams_list.remove(team['P'][1]['team'])
+        # retrieve the count of all items in our teams list
+        stack_bonus = 0.0
+        team_counts = {}
+        for t in teams_list:
+            if t in team_counts:
+                team_counts[t] += 1
+            else:
+                team_counts[t] = 1
+        # if we're at 4 we have a stack, whether or not it's good
+        for t in team_counts:
+            if team_counts[t] == 4:
+                # if we're using batting orders, determine the strength of the stack
+                if conf.use_batting_orders:
+                    stack_bonus += self._get_stack_strength(
+                        t,
+                        self._get_stacked_players(t, team))
+                    # only grant the stack bonus once
+                else:
+                    stack_bonus += conf.stack_bonus
+                break
+        return stack_bonus
+
+    def _get_stack_strength(self, team_name, players):
+        """Return the strength of a stack based on how close players are in
+        the batting order."""
+        batting_order = conf.batting_orders[team_name]
+        p_pos = sorted([batting_order.index(player) for player in players])
+        # look for closest bunch (i.e: 0,5,6,8 -> 8, 5,6,8,9 -> 4)
+        # ideal distance is 3, as in 1,2,3,4 (4-3) + (3-2) + (2 - 1)
+        # option1 -> 0,5,6,8 -> 8 + 1 = 9
+        option_1 = (p_pos[3] - p_pos[2]) + (p_pos[2] - p_pos[1]) + (p_pos[1] - p_pos[0]) + 1
+        # option2 -> 9,5,6,8 -> 4 + 1 = 5
+        option_2 = (p_pos[3] - p_pos[2]) + (p_pos[2] - p_pos[1]) + ((p_pos[0] + 9) - p_pos[3]) + 1
+        # option2 -> 9,14,6,8 -> 8 + 1 = 9
+        option_3 = (p_pos[1] - p_pos[0]) + ((p_pos[0] + 9) - p_pos[3]) + (p_pos[3] - p_pos[2]) + 1
+        act_dist = np.min([option_1, option_2, option_3])
+        """
+        Here, we divide the stack bonus by the actual distance (plus 1) and
+        multiply by the ideal distance of 3 + 1 = 4.  We add one to narrow the
+        gap between different stacks.  This means that, for a stack bonus of
+        30, we would see the following distribution:
+
+        Dist.   Bonus Score
+         3         30
+         4         24
+         5         20
+         6         17.14
+
+        """
+        return (conf.stack_bonus / act_dist) * 4.0
+
+    def _get_stacked_players(self, t, team):
+        '''Return names of stacked players.'''
+        stacked_players = []
+        for pos in team:
+            for player in team[pos]:
+                if player['team'] == t:
+                    stacked_players.append(player['name'])
+        return stacked_players
 
     def grade(self, pop):
         'Find average fitness for a population.'

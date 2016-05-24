@@ -1,6 +1,8 @@
 """Utility File."""
 import math
-import pdb
+# import pdb
+import conf
+from tabulate import tabulate
 
 
 def is_number(str):
@@ -14,6 +16,18 @@ def is_number(str):
         return True
     except ValueError:
         return False
+
+
+def print_lineup(lineup, gen):
+    """Print the full lineup and its fitness, salary, and proj. points."""
+    print tabulate(
+        sorted(lineup_dict_to_list(lineup), key=lambda x: (x[1], x[5])),
+        headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'],
+        tablefmt="pretty")
+    print "\nFitness: %s" % gen.fitness(lineup)
+    print "Salary: %s" % gen.get_team_salary(lineup)
+    print "Projected Points: %s" % gen.get_team_point_total(lineup)
+    print '\n'
 
 
 def lineup_dict_to_list(dict_list):
@@ -32,9 +46,19 @@ def lineup_dict_to_list(dict_list):
 def player_dict_to_list(player):
     """Convert player dictionary to list."""
     new_player = []
-    new_player.append(player['name'])
-    new_player.append(player['team'])
+    team = player['team']
+    name = player['name']
+    new_player.append(name)
+    new_player.append(team)
     new_player.append(player['pos'])
     new_player.append(player['cost'])
     new_player.append(player['value'])
+    try:
+        if name in conf.batting_orders[team]:
+            new_player.append(
+                conf.batting_orders[team].index(name) + 1)
+        else:
+            new_player.append('NL')
+    except:
+        new_player.append('NL')
     return new_player

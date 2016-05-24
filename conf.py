@@ -1,17 +1,6 @@
 """Configuration file."""
 import os
 
-"""Account Credentials"""
-sabersim_creds = {
-    "username": "kevin.a.meurer@gmail.com",
-    "password": "cowbell1"
-}
-
-google_creds = {
-    "email": "kevin.a.meurer",
-    "password": "cowbell453"
-}
-
 """Local Paths"""
 chromedriver_path = './chromedriver'
 root_path = os.path.dirname(os.path.abspath(__file__))
@@ -44,11 +33,12 @@ use_rotogrinder_scores = False
 genetic_generations = 1000
 retain = .6
 random_select = .07
-mutate_chance = 0.04
+mutate_chance = 0.06
 population_size = 150
 
-# how to sort the results: can be 'cost', 'points', 'cost-points', 'cost-fitness', 'fitness'
-sort_by = 'cost-fitness'
+# how to sort the results: can be 'cost', 'points', 'cost-points',
+# 'cost-fitness', 'fitness'
+sort_by = 'fitness'
 
 """
 Original settings:
@@ -64,12 +54,16 @@ population_size = 10000
 """MLB-specific Genetic Settings"""
 self_defeating_weight = 3.0
 same_team_bonus_weight = 3.0
-stack_bonus = 20.0
+favored_team_bonus = 5.0
+stack_bonus = 0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
+use_inclusion = True
+included_teams = []
 excluded_teams = []
+favored_teams = []
 
 
 """NBA-specific Genetic Settings"""
