@@ -211,8 +211,12 @@ class GeneticMLB(object):
         primary_teams_set = set(primary_teams)
         # reward teams that favor one team via fewer different teams
         same_team_bonus = self._get_same_team_bonus(primary_teams_set)
-        stack_bonus = self._get_stack_bonus(team, primary_teams)
-        return same_team_bonus + stack_bonus
+        favored_team_bonus = self._get_favored_team_bonus(primary_teams)
+        if conf.use_stack_bonus:
+            stack_bonus = self._get_stack_bonus(team, primary_teams)
+            return same_team_bonus + stack_bonus + favored_team_bonus
+        else:
+            return same_team_bonus + favored_team_bonus
 
     def _get_same_team_bonus(self, team_set):
         '''
@@ -221,6 +225,13 @@ class GeneticMLB(object):
         '''
         return (9 - len(team_set)) * conf.same_team_bonus_weight
 
+    def _get_favored_team_bonus(self, team_list):
+        bonus = 0
+        for team in conf.favored_teams:
+            for list_team in team_list:
+                if team == list_team:
+                    bonus += conf.favored_team_bonus
+        return bonus
 
     def _get_stack_bonus(self, team, teams_list):
         '''Return the stack bonus.'''

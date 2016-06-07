@@ -59,6 +59,8 @@ position_results = {
 players = []
 players_ss = []
 players_nf = []
+if conf.use_rotogrinder_scores or conf.site == 'draftkings':
+    players_rg = []
 
 """BATTER CONSOLIDATION"""
 for batter in merged_batter_df.iterrows():
@@ -85,7 +87,16 @@ for batter in merged_batter_df.iterrows():
     else:
         raise ValueError('Please choose either "fanduel" or "draftkings" in conf.site.')
     avg_score = None
-    if conf.use_rotogrinder_scores:
+    if conf.site == 'draftkings' or conf.supp_proj_site == 'rotogrinder':
+        if is_number(ss_score) and is_number(batter_info['rg_pred']):
+            avg_score = np.mean([float(ss_score), float(batter_info['rg_pred'])])
+        elif is_number(ss_score):
+            avg_score = ss_score
+        elif is_number(batter_info['rg_pred']):
+            avg_score = float(batter_info['rg_pred'])
+        else:
+            continue
+    elif conf.use_rotogrinder_scores:
         if is_number(ss_score) and is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
             avg_score = np.mean([float(ss_score), float(batter_info['rg_pred']), float(batter_info['nf_pred'])])
         elif is_number(batter_info['rg_pred']) and is_number(batter_info['nf_pred']):
@@ -111,15 +122,6 @@ for batter in merged_batter_df.iterrows():
     if player_cost == 0.0:
         continue
     if batter_info['rg_pos'] in position_results:
-        position_results[batter_info['rg_pos']].append(
-            [batter_name,
-             batter_info['rg_team'],
-             player_cost,
-             ss_score,
-             batter_info['rg_pred'],
-             batter_info['nf_pred'],
-             avg_score]
-        )
         players.append({
             "value": avg_score,
             "cost": player_cost,
@@ -132,20 +134,48 @@ for batter in merged_batter_df.iterrows():
             players_ss.append({
                 "value": ss_score,
                 "cost": player_cost,
-                "pos": batter_info['nf_pos'],
+                "pos": batter_info['rg_pos'],
                 "name": batter_name,
                 "team": batter_info['rg_team'],
                 "opp": batter_info['rg_opp_team'].replace('@', '')
             })
-        if is_number(batter_info['nf_pred']):
-            players_nf.append({
-                "value": float(batter_info['nf_pred']),
-                "cost": player_cost,
-                "pos": batter_info['nf_pos'],
-                "name": batter_name,
-                "team": batter_info['rg_team'],
-                "opp": batter_info['rg_opp_team'].replace('@', '')
-            })
+        if conf.site == 'fanduel':
+            if is_number(batter_info['nf_pred']):
+                players_nf.append({
+                    "value": float(batter_info['nf_pred']),
+                    "cost": player_cost,
+                    "pos": batter_info['rg_pos'],
+                    "name": batter_name,
+                    "team": batter_info['rg_team'],
+                    "opp": batter_info['rg_opp_team'].replace('@', '')
+                })
+            position_results[batter_info['rg_pos']].append(
+                [batter_name,
+                 batter_info['rg_team'],
+                 player_cost,
+                 ss_score,
+                 batter_info['rg_pred'],
+                 batter_info['nf_pred'],
+                 avg_score]
+            )
+        elif conf.site == 'draftkings':
+            if is_number(batter_info['rg_pred']):
+                players_rg.append({
+                    "value": float(batter_info['rg_pred']),
+                    "cost": player_cost,
+                    "pos": batter_info['rg_pos'],
+                    "name": batter_name,
+                    "team": batter_info['rg_team'],
+                    "opp": batter_info['rg_opp_team'].replace('@', '')
+                })
+            position_results[batter_info['rg_pos']].append(
+                [batter_name,
+                 batter_info['rg_team'],
+                 player_cost,
+                 ss_score,
+                 batter_info['rg_pred'],
+                 avg_score]
+            )
 
 """PITCHER CALCULATIONS"""
 pitchers_overall = []
@@ -161,20 +191,34 @@ for pitcher in merged_pitcher_df.iterrows():
         if pitcher_name in conf.excluded_pitchers or\
                 pitcher_info['rg_team'] in conf.excluded_teams:
             continue
+    if conf.site == 'fanduel':
+        ss_score = float(pitcher_info['ss_fd_pred'])
+    elif conf.site == 'draftkings':
+        ss_score = float(pitcher_info['ss_dk_pred'])
+    else:
+        raise ValueError('Please choose either "fanduel" or "draftkings" in conf.site.')
     avg_score = None
-    if conf.use_rotogrinder_scores:
-        if conf.site == 'draftkings':
-            avg_score = float(pitcher_info['ss_dk_pred'])
-        elif is_number(pitcher_info['nf_pred']) and is_number(pitcher_info['ss_fd_pred']):
-            avg_score = np.mean([float(pitcher_info['nf_pred']), float(pitcher_info['ss_fd_pred'])])
+    if conf.site == 'draftkings' or conf.supp_proj_site == 'rotogrinder':
+        if is_number(ss_score) and is_number(pitcher_info['rg_pred']):
+            avg_score = np.mean([float(ss_score), float(pitcher_info['rg_pred'])])
+        elif is_number(ss_score):
+            avg_score = float(ss_score)
+        else:
+            continue
+    elif conf.use_rotogrinder_scores:
+        if is_number(pitcher_info['nf_pred']) and is_number(pitcher_info['ss_fd_pred']) and is_number(pitcher_info['rg_pred']):
+            avg_score = np.mean([float(pitcher_info['nf_pred']), float(pitcher_info['ss_fd_pred']), float(pitcher_info['rg_pred'])])
         elif is_number(pitcher_info['ss_fd_pred']):
             avg_score = float(pitcher_info['ss_fd_pred'])
-        elif is_number(pitcher_info['nf_pred']):
-            avg_score = float(pitcher_info['nf_pred'])
         else:
             continue
     else:
-        avg_score = float(pitcher_info['nf_pred'])
+        if is_number(pitcher_info['nf_pred']) and is_number(pitcher_info['ss_fd_pred']):
+            avg_score = np.mean([float(pitcher_info['nf_pred']), float(pitcher_info['ss_fd_pred'])])
+        elif is_number(pitcher_info['ss_fd_pred']):
+            avg_score = float(pitcher_info['ss_fd_pred'])
+        else:
+            continue
     players.append({
         "value": avg_score,
         "cost": pitcher_cost,
@@ -183,9 +227,19 @@ for pitcher in merged_pitcher_df.iterrows():
         "team": pitcher_info['rg_team'],
         "opp": pitcher_info['rg_opp_team']
     })
-    if is_number(pitcher_info['ss_fd_pred']):
+
+    if is_number(pitcher_info['ss_fd_pred']) and conf.site == 'fanduel':
         players_ss.append({
             "value": float(pitcher_info['ss_fd_pred']),
+            "cost": pitcher_cost,
+            "pos": 'P',
+            "name": pitcher_name,
+            "team": pitcher_info['rg_team'],
+            "opp": pitcher_info['rg_opp_team']
+        })
+    elif is_number(pitcher_info['ss_dk_pred']) and conf.site == 'draftkings':
+        players_ss.append({
+            "value": float(pitcher_info['ss_dk_pred']),
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
@@ -201,134 +255,180 @@ for pitcher in merged_pitcher_df.iterrows():
             "team": pitcher_info['rg_team'],
             "opp": pitcher_info['rg_opp_team']
         })
-    players_nf.append({
-        "value": float(pitcher_info['nf_pred']),
-        "cost": pitcher_cost,
-        "pos": 'P',
-        "name": pitcher_name,
-        "team": pitcher_info['rg_team'],
-        "opp": pitcher_info['rg_opp_team']
-    })
     if conf.site == 'fanduel':
+        players_nf.append({
+            "value": float(pitcher_info['nf_pred']),
+            "cost": pitcher_cost,
+            "pos": 'P',
+            "name": pitcher_name,
+            "team": pitcher_info['rg_team'],
+            "opp": pitcher_info['rg_opp_team']
+        })
         pitchers_overall.append(
             [pitcher_name, pitcher_info['rg_team'], pitcher_cost,
              float(pitcher_info['nf_pred']), float(pitcher_info['rg_pred']),
              float(pitcher_info['ss_fd_pred']), avg_score])
     elif conf.site == 'draftkings':
+        players_rg.append({
+            "value": float(pitcher_info['rg_pred']),
+            "cost": pitcher_cost,
+            "pos": 'P',
+            "name": pitcher_name,
+            "team": pitcher_info['rg_team'],
+            "opp": pitcher_info['rg_opp_team']
+        })
         pitchers_overall.append(
             [pitcher_name, pitcher_info['rg_team'], pitcher_cost,
-             float(pitcher_info['rg_pred']), float(pitcher_info['ss_fd_pred'])])
+             float(pitcher_info['rg_pred']), float(pitcher_info['ss_dk_pred']),
+             avg_score])
+
 
 """OUTPUT PROJECTIONS"""
-print "Pitcher Projections"
+print'\n'
 if conf.site == 'fanduel':
+    print "Pitcher Projections"
     print tabulate(sorted(pitchers_overall, key=lambda player: player[4],
                    reverse=True), headers=[
                    "Name", "Team", "Cost", "Numberfire Pred",
                    "Rotogrinders Pred", "Sabersim Pred", "Average Pred"], tablefmt="plain")
+
+    print "\nShort Stop Projections"
+    print tabulate(sorted(position_results['SS'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+
+    print '\n'
+
+    print "First Base Projections"
+    print tabulate(sorted(position_results['1B'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+
+    print '\n'
+
+    print "Second Base Projections"
+    print tabulate(sorted(position_results['2B'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+
+    print '\n'
+
+    print "Third Base Projections"
+    print tabulate(sorted(position_results['3B'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+
+    print '\n'
+
+    print "Catcher Projections"
+    print tabulate(sorted(position_results['C'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+
+    print '\n'
+
+    print "OF Projections"
+    print tabulate(sorted(position_results['OF'], key=lambda player: player[6],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
+
 elif conf.site == 'draftkings':
-    print tabulate(sorted(pitchers_overall, key=lambda player: player[3],
+    print "Pitcher Projections"
+    print tabulate(sorted(pitchers_overall, key=lambda player: player[5],
                    reverse=True), headers=["Name", "Team", "Cost",
-                   "Rotogrinders Pred", "Sabersim Pred"], tablefmt="plain")
+                   "Rotogrinders Pred", "Sabersim Pred", 'Average Pred'], tablefmt="plain")
 
-print'\n'
+    print "Short Stop Projections"
+    print tabulate(sorted(position_results['SS'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
-print "Short Stop Projections"
-print tabulate(sorted(position_results['SS'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print '\n'
 
-print '\n'
+    print "First Base Projections"
+    print tabulate(sorted(position_results['1B'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
-print "First Base Projections"
-print tabulate(sorted(position_results['1B'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print '\n'
 
-print '\n'
+    print "Second Base Projections"
+    print tabulate(sorted(position_results['2B'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
-print "Second Base Projections"
-print tabulate(sorted(position_results['2B'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print '\n'
 
-print '\n'
+    print "Third Base Projections"
+    print tabulate(sorted(position_results['3B'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
-print "Third Base Projections"
-print tabulate(sorted(position_results['3B'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print '\n'
 
-print '\n'
+    print "Catcher Projections"
+    print tabulate(sorted(position_results['C'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
-print "Catcher Projections"
-print tabulate(sorted(position_results['C'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print '\n'
 
-print '\n'
-
-print "OF Projections"
-print tabulate(sorted(position_results['OF'], key=lambda player: player[6],
-    reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Numberfire Pred", "Avg Proj"], tablefmt="plain")
+    print "OF Projections"
+    print tabulate(sorted(position_results['OF'], key=lambda player: player[5],
+        reverse=True), headers=["Name", "Team", "Cost", "Sabersim Pred", "Rotogrinder Pred", "Avg Proj"], tablefmt="plain")
 
 """GENERATE LINEUPS"""
 print "\nTOP GENETIC AVERAGED LINEUPS"
 gen = GeneticMLB(conf.mlb_max_salary)
 lineups = gen.calculate(players)
+print "Average Fitness: %d\n" % gen.grade(lineups)
 try:
     print "Number 1"
-    print_lineup(lineups[0])
+    print_lineup(lineups[0], gen)
     print "Number 2"
-    print_lineup(lineups[1])
+    print_lineup(lineups[1], gen)
     print "Number 3"
-    print_lineup(lineups[2])
+    print_lineup(lineups[2], gen)
     print "Number 4"
-    print_lineup(lineups[3])
+    print_lineup(lineups[3], gen)
     print 'Number 5'
-    print_lineup(lineups[4])
+    print_lineup(lineups[4], gen)
     print '\n'
 except:
     pdb.set_trace()
 
 print "TOP GENETIC SABERSIM LINEUPS WITH CURRENT SETTINGS"
 lineups = gen.calculate(players_ss)
+print "Average Fitness: %d\n" % gen.grade(lineups)
 print "Number 1"
-print_lineup(lineups[0])
+print_lineup(lineups[0], gen)
 print "Number 2"
-print_lineup(lineups[1])
+print_lineup(lineups[1], gen)
 print "Number 3"
-print_lineup(lineups[2])
+print_lineup(lineups[2], gen)
 print "Number 4"
-print_lineup(lineups[3])
+print_lineup(lineups[3], gen)
 print 'Number 5'
-print_lineup(lineups[4])
+print_lineup(lineups[4], gen)
 print '\n'
 
-if conf.use_rotogrinder_scores:
+if conf.use_rotogrinder_scores or conf.site == 'draftkings':
     print "TOP GENETIC ROTOGRINDERS LINEUPS WITH CURRENT SETTINGS"
     lineups = gen.calculate(players_rg)
+    print "Average Fitness: %d\n" % gen.grade(lineups)
     print "Number 1"
-    print_lineup(lineups[0])
+    print_lineup(lineups[0], gen)
     print "Number 2"
-    print_lineup(lineups[1])
+    print_lineup(lineups[1], gen)
     print "Number 3"
-    print_lineup(lineups[2])
+    print_lineup(lineups[2], gen)
     print "Number 4"
-    print_lineup(lineups[3])
+    print_lineup(lineups[3], gen)
     print 'Number 5'
-    print_lineup(lineups[4])
+    print_lineup(lineups[4], gen)
     print '\n'
 
-print "TOP GENETIC NUMBERFIRE LINEUPS WITH CURRENT SETTINGS"
-lineups = gen.calculate(players_nf)
-print "Number 1"
-print tabulate(sorted(lineup_dict_to_list(lineups[0]), key=lambda x: x[1]), headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'], tablefmt="pretty")
-print '\n'
-print "Number 2"
-print tabulate(sorted(lineup_dict_to_list(lineups[1]), key=lambda x: x[1]), headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'],tablefmt="pretty")
-print '\n'
-print "Number 3"
-print tabulate(sorted(lineup_dict_to_list(lineups[2]), key=lambda x: x[1]), headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'],tablefmt="pretty")
-print '\n'
-print "Number 4"
-print tabulate(sorted(lineup_dict_to_list(lineups[3]), key=lambda x: x[1]), headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'],tablefmt="pretty")
-print '\n'
-print "Number 5"
-print tabulate(sorted(lineup_dict_to_list(lineups[4]), key=lambda x: x[1]), headers=['name', 'team', 'pos', 'cost', 'points', 'batting_pos'],tablefmt="pretty")
-print '\n'
+if conf.site == 'fanduel':
+    print "TOP GENETIC NUMBERFIRE LINEUPS WITH CURRENT SETTINGS"
+    lineups = gen.calculate(players_nf)
+    print "Average Fitness: %d\n" % gen.grade(lineups)
+    print "Number 1"
+    print_lineup(lineups[0], gen)
+    print "Number 2"
+    print_lineup(lineups[1], gen)
+    print "Number 3"
+    print_lineup(lineups[2], gen)
+    print "Number 4"
+    print_lineup(lineups[3], gen)
+    print 'Number 5'
+    print_lineup(lineups[4], gen)
+    print '\n'

@@ -8,7 +8,7 @@ cache_path = os.path.join(root_path, 'cache')
 
 
 # 'fanduel' or 'draftkings'
-site = 'fanduel'
+site = 'draftkings'
 include_numberfire = False
 
 """Web Paths"""
@@ -23,48 +23,50 @@ rotogrinder_nba_path =\
 nba_max_salary = 60000
 if site == 'fanduel':
     mlb_max_salary = 35000
+    supp_proj_site = 'numberfire'
 elif site == 'draftkings':
     mlb_max_salary = 50000
+    supp_proj_site = 'N/A'
 use_rotogrinder_scores = False
 
 # determines how much negative weight to assign to
 # teams that play themselves
 """General Genetic Settings"""
+'''
 genetic_generations = 1000
 retain = .6
 random_select = .07
 mutate_chance = 0.06
 population_size = 150
+'''
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
-sort_by = 'fitness'
+sort_by = 'cost-points'
 
 """
 Original settings:
 """
-"""
-genetic_generations = 75
+genetic_generations = 50
 retain = 0.35
 random_select = 0.05
 mutate_chance = 0.015
 population_size = 10000
-"""
 
 """MLB-specific Genetic Settings"""
 self_defeating_weight = 3.0
 same_team_bonus_weight = 3.0
-favored_team_bonus = 5.0
-stack_bonus = 0
+favored_team_bonus = 3.0
+use_stack_bonus = False
+stack_bonus = 0.0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
-use_inclusion = True
+use_inclusion = False
 included_teams = []
 excluded_teams = []
 favored_teams = []
-
 
 """NBA-specific Genetic Settings"""
 excluded_nba_players = []
@@ -94,7 +96,6 @@ long_to_short_names = {
     'Angels': 'LAA',
     'Mets': 'NYM',
     'Royals': 'KCR',
-    'Royals': 'KC',
     'Blue Jays': 'TOR',
     'Reds': 'CIN',
     'Dodgers': 'LAD',

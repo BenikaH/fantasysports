@@ -68,7 +68,10 @@ def retrieve_mlb_batting_order():
         away_players = card.find('div', class_='away-team').find('ul', class_='players').find_all('li', class_='player')
         away_order = []
         for player in away_players:
-            away_order.append(player.find('a').get_text())
+            try:
+                away_order.append(player.find('a').get_text())
+            except:
+                continue
         batting_orders[away_team] = away_order
         home_team = team_names[1].find(class_='shrt').get_text()
         try:

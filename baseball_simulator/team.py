@@ -2,6 +2,7 @@
 from scrapers.rotogrinder_scraper import retrieve_mlb_batting_order
 from scrapers.baseball_ref_scraper import retrieve_most_recent_batting_order
 from scrapers import baseball_ref_scraper as brs
+from player import Player
 import conf
 
 
@@ -17,8 +18,8 @@ class Team(object):
         player_name_list = brs.get_player_list(name)
         players = {}
         for name in player_name_list:
-            players[name] = brs.get_player_statistics(name)
-        return []
+            players[name] = Player(name)
+        return 
 
     def _retrieve_projected_batting_order(self, name):
         batting_orders = retrieve_mlb_batting_order()

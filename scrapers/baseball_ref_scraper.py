@@ -30,6 +30,17 @@ def retrieve_player_link_map():
 # ALL TODO FROM HERE ON
 
 def get_player_statistics(player_name):
+    if conf.player_link_map != None:
+        conf.player_link_map = retrieve_player_link_map()
+    http = urllib3.PoolManager()
+    if player_name in conf.player_link_map:
+        r = http.urlopen(
+                'GET', 'http://www.baseball-reference.com%s' % conf.player_link_map[player_name],
+                preload_content=False)
+        soup = BeautifulSoup(r.data, 'html5lib')
+        pdb.set_trace()
+    else:
+        except ValueError("Player %s not found." % player_name)
     return {}
 
 ##################
