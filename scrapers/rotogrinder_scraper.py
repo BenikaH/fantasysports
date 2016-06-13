@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import urllib3
-import time
+from util.util import standardize_team_name
 import csv
 import io
 import conf
@@ -72,14 +72,14 @@ def retrieve_mlb_batting_order():
                 away_order.append(player.find('a').get_text())
             except:
                 continue
-        batting_orders[away_team] = away_order
+        batting_orders[standardize_team_name(away_team)] = away_order
         home_team = team_names[1].find(class_='shrt').get_text()
         try:
             home_players = card.find('div', class_='home-team').find('ul', class_='players').find_all('li', class_='player')
+            home_order = []
+            for player in home_players:
+                home_order.append(player.find('a').get_text())
         except:
             continue
-        home_order = []
-        for player in home_players:
-            home_order.append(player.find('a').get_text())
-        batting_orders[home_team] = home_order
+        batting_orders[standardize_team_name(home_team)] = home_order
     return batting_orders

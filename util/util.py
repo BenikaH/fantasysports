@@ -62,3 +62,10 @@ def player_dict_to_list(player):
     except:
         new_player.append('NL')
     return new_player
+
+
+def standardize_team_name(name):
+    if name not in conf.short_to_long_names:
+        return "Do not cover %s" % name
+    return conf.long_to_short_names[
+        conf.short_to_long_names[name]]

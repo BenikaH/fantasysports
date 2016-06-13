@@ -5,12 +5,10 @@ from scrapers.numberfire_scraper import\
     retrieve_numberfire_mlb_predictions_and_salaries
 from scrapers.rotogrinder_scraper import\
     retrieve_rotogrinder_mlb_projections, retrieve_mlb_batting_order
-from util.score_calculators import calculate_fanduel_hitter_score,\
-    calculate_draftkings_hitter_score
 from tabulate import tabulate
 import numpy as np
 import conf
-from util.util import is_number, lineup_dict_to_list, print_lineup
+from util.util import is_number, print_lineup, standardize_team_name
 from lineup_optimizers.genetic_mlb import GeneticMLB
 import pdb
 
@@ -65,19 +63,20 @@ if conf.use_rotogrinder_scores or conf.site == 'draftkings':
 """BATTER CONSOLIDATION"""
 for batter in merged_batter_df.iterrows():
     batter_info = batter[1]
+    batter_team = standardize_team_name(batter_info['rg_team'])
     batter_name = batter[0]
     # Skip specified batters
     if conf.use_inclusion:
         if batter_name in conf.excluded_batters or\
-                batter_info['rg_team'] not in conf.included_teams:
+                batter_team not in conf.included_teams:
             continue
-        elif batter_name not in conf.batting_orders[batter_info['rg_team']]:
+        elif batter_name not in conf.batting_orders[batter_team]:
             continue
     else:
         if batter_name in conf.excluded_batters or\
-                batter_info['rg_team'] in conf.excluded_teams:
+                batter_team in conf.excluded_teams:
             continue
-        elif batter_name not in conf.batting_orders[batter_info['rg_team']]:
+        elif batter_team in conf.batting_orders and batter_name not in conf.batting_orders[batter_team]:
             continue
     # sing, doub, trip, walk, hbp, hr, runs, rbi, sb
     if conf.site == 'fanduel':
@@ -127,7 +126,7 @@ for batter in merged_batter_df.iterrows():
             "cost": player_cost,
             "pos": batter_info['rg_pos'],
             "name": batter_name,
-            "team": batter_info['rg_team'],
+            "team": batter_team,
             "opp": batter_info['rg_opp_team'].replace('@', '')
         })
         if is_number(ss_score):
@@ -136,7 +135,7 @@ for batter in merged_batter_df.iterrows():
                 "cost": player_cost,
                 "pos": batter_info['rg_pos'],
                 "name": batter_name,
-                "team": batter_info['rg_team'],
+                "team": batter_team,
                 "opp": batter_info['rg_opp_team'].replace('@', '')
             })
         if conf.site == 'fanduel':
@@ -146,12 +145,12 @@ for batter in merged_batter_df.iterrows():
                     "cost": player_cost,
                     "pos": batter_info['rg_pos'],
                     "name": batter_name,
-                    "team": batter_info['rg_team'],
+                    "team": batter_team,
                     "opp": batter_info['rg_opp_team'].replace('@', '')
                 })
             position_results[batter_info['rg_pos']].append(
                 [batter_name,
-                 batter_info['rg_team'],
+                 batter_team,
                  player_cost,
                  ss_score,
                  batter_info['rg_pred'],
@@ -165,12 +164,12 @@ for batter in merged_batter_df.iterrows():
                     "cost": player_cost,
                     "pos": batter_info['rg_pos'],
                     "name": batter_name,
-                    "team": batter_info['rg_team'],
+                    "team": batter_team,
                     "opp": batter_info['rg_opp_team'].replace('@', '')
                 })
             position_results[batter_info['rg_pos']].append(
                 [batter_name,
-                 batter_info['rg_team'],
+                 batter_team,
                  player_cost,
                  ss_score,
                  batter_info['rg_pred'],
@@ -181,15 +180,16 @@ for batter in merged_batter_df.iterrows():
 pitchers_overall = []
 for pitcher in merged_pitcher_df.iterrows():
     pitcher_info = pitcher[1]
+    pitcher_team = standardize_team_name(pitcher_info['rg_team'])
     pitcher_name = pitcher[0]
     pitcher_cost = float(pitcher_info['rg_cost'])
     if conf.use_inclusion:
         if pitcher_name in conf.excluded_pitchers or\
-                pitcher_info['rg_team'] not in conf.included_teams:
+                pitcher_team not in conf.included_teams:
             continue
     else:
         if pitcher_name in conf.excluded_pitchers or\
-                pitcher_info['rg_team'] in conf.excluded_teams:
+                pitcher_team in conf.excluded_teams:
             continue
     if conf.site == 'fanduel':
         ss_score = float(pitcher_info['ss_fd_pred'])
@@ -224,7 +224,7 @@ for pitcher in merged_pitcher_df.iterrows():
         "cost": pitcher_cost,
         "pos": 'P',
         "name": pitcher_name,
-        "team": pitcher_info['rg_team'],
+        "team": pitcher_team,
         "opp": pitcher_info['rg_opp_team']
     })
 
@@ -234,7 +234,7 @@ for pitcher in merged_pitcher_df.iterrows():
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
-            "team": pitcher_info['rg_team'],
+            "team": pitcher_team,
             "opp": pitcher_info['rg_opp_team']
         })
     elif is_number(pitcher_info['ss_dk_pred']) and conf.site == 'draftkings':
@@ -243,7 +243,7 @@ for pitcher in merged_pitcher_df.iterrows():
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
-            "team": pitcher_info['rg_team'],
+            "team": pitcher_team,
             "opp": pitcher_info['rg_opp_team']
         })
     if conf.use_rotogrinder_scores:
@@ -252,7 +252,7 @@ for pitcher in merged_pitcher_df.iterrows():
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
-            "team": pitcher_info['rg_team'],
+            "team": pitcher_team,
             "opp": pitcher_info['rg_opp_team']
         })
     if conf.site == 'fanduel':
@@ -261,11 +261,11 @@ for pitcher in merged_pitcher_df.iterrows():
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
-            "team": pitcher_info['rg_team'],
+            "team": pitcher_team,
             "opp": pitcher_info['rg_opp_team']
         })
         pitchers_overall.append(
-            [pitcher_name, pitcher_info['rg_team'], pitcher_cost,
+            [pitcher_name, pitcher_team, pitcher_cost,
              float(pitcher_info['nf_pred']), float(pitcher_info['rg_pred']),
              float(pitcher_info['ss_fd_pred']), avg_score])
     elif conf.site == 'draftkings':
@@ -274,11 +274,11 @@ for pitcher in merged_pitcher_df.iterrows():
             "cost": pitcher_cost,
             "pos": 'P',
             "name": pitcher_name,
-            "team": pitcher_info['rg_team'],
+            "team": pitcher_team,
             "opp": pitcher_info['rg_opp_team']
         })
         pitchers_overall.append(
-            [pitcher_name, pitcher_info['rg_team'], pitcher_cost,
+            [pitcher_name, pitcher_team, pitcher_cost,
              float(pitcher_info['rg_pred']), float(pitcher_info['ss_dk_pred']),
              avg_score])
 
@@ -382,6 +382,14 @@ try:
     print_lineup(lineups[3], gen)
     print 'Number 5'
     print_lineup(lineups[4], gen)
+    print "Number 6"
+    print_lineup(lineups[5], gen)
+    print 'Number 7'
+    print_lineup(lineups[6], gen)
+    print "Number 8"
+    print_lineup(lineups[7], gen)
+    print 'Number 9'
+    print_lineup(lineups[8], gen)
     print '\n'
 except:
     pdb.set_trace()
@@ -399,6 +407,14 @@ print "Number 4"
 print_lineup(lineups[3], gen)
 print 'Number 5'
 print_lineup(lineups[4], gen)
+print "Number 6"
+print_lineup(lineups[5], gen)
+print 'Number 7'
+print_lineup(lineups[6], gen)
+print "Number 8"
+print_lineup(lineups[7], gen)
+print 'Number 9'
+print_lineup(lineups[8], gen)
 print '\n'
 
 if conf.use_rotogrinder_scores or conf.site == 'draftkings':
@@ -415,6 +431,14 @@ if conf.use_rotogrinder_scores or conf.site == 'draftkings':
     print_lineup(lineups[3], gen)
     print 'Number 5'
     print_lineup(lineups[4], gen)
+    print "Number 5"
+    print_lineup(lineups[5], gen)
+    print 'Number 6'
+    print_lineup(lineups[6], gen)
+    print "Number 7"
+    print_lineup(lineups[7], gen)
+    print 'Number 8'
+    print_lineup(lineups[8], gen)
     print '\n'
 
 if conf.site == 'fanduel':

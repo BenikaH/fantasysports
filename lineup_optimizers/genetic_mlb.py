@@ -168,9 +168,7 @@ class GeneticMLB(object):
             [t for teams in primary_teams for t in teams]).items()
             if count > 1]
         for count in team_counts:
-            if conf.site == 'fanduel' and count > 4:
-                return True
-            if conf.site == 'draftkings' and count > 5:
+            if count > conf.max_team_repetition:
                 return True
         return False
 
