@@ -15,8 +15,8 @@ class Team(object):
         self.players = self._retrieve_players(team_name)
         self.batting_order = self._retrieve_projected_batting_order(team_name)
 
-    def get_player(batting_pos):
-
+    def get_player(self, batting_pos):
+        return self.batting_order[batting_pos]
 
     def _retrieve_players(self, name):
         player_name_list = brs.get_player_list(name)

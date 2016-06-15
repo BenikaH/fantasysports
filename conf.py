@@ -69,7 +69,7 @@ min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
 use_inclusion = True
-included_teams = ['DET', 'NYY', 'KCR', 'CWS', 'NYM', 'MIL', 'BOS', 'MIN']
+included_teams = []
 excluded_teams = []
 favored_teams = []
 
@@ -197,5 +197,26 @@ league_totals = {
         'HBP': 1602.0,
         'OUT': 88401.0,
         'PA': 183628.0
+    },
+    'OVERALL': {
+        'PA': 552430.0,
+        'BB': 42733.0,
+        'HR': 13756.0,
+        '1B': 84877.0,
+        'SO': 111597.0,
+        '2B': 24601.0,
+        '3B': 2560.0,
+        'HBP': 4790.0,
+        'OUT': 267516.0
+    },
+    'PROBS': {
+        'BB': 0.07735459696251108,
+        'HR': 0.024900892420759192,
+        'SO': 0.20201111453034773,
+        '2B': 0.044532338938870084,
+        '1B': 0.1536429954926416,
+        '3B': 0.00463407128504969,
+        'HBP': 0.008670781818510942,
+        'OUT': 0.48425320855130966
     }
 }
