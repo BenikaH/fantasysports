@@ -5,7 +5,10 @@ import os
 chromedriver_path = './chromedriver'
 root_path = os.path.dirname(os.path.abspath(__file__))
 cache_path = os.path.join(root_path, 'cache')
-schedule_path = './data/schedule.txt'
+schedule_path = './data/schedule2016.txt'
+pitcher_handedness_path = './data/batter_handedness.csv'
+batter_handedness_path = './data/pitcher_handedness.csv'
+field_factors_path = './data/field_factors.csv'
 
 
 # 'fanduel' or 'draftkings'
