@@ -3,6 +3,7 @@ from scrapers.rotogrinder_scraper import retrieve_mlb_batting_order
 from scrapers.baseball_ref_scraper import retrieve_most_recent_batting_order
 from scrapers import baseball_ref_scraper as brs
 from player import Player
+from pitcher import Pitcher
 import util.util as util
 import conf
 
@@ -14,8 +15,19 @@ class Team(object):
         """Initialization function."""
         self.players = self._retrieve_players(team_name)
         self.batting_order = self._retrieve_projected_batting_order(team_name)
+        self.roster = self._load_team_roster(team_name)
         for idx, player_name in enumerate(self.batting_order):
-            self.batting_order[idx] = Player(player_name)
+            self.batting_order[idx] = self.roster[player_name]
+
+    def _load_team_roster(self, team_name):
+        """Load team's roster."""
+        roster = brs.retrieve_team_roster(team_name)
+        for p_name in roster:
+            if roster[p_name] == 'Pitcher':
+                roster[p_name] = Pitcher(p_name)
+            else:
+                roster[p_name] = Player(p_name)
+        return roster
 
     def get_player(self, batting_pos):
         return self.batting_order[batting_pos]

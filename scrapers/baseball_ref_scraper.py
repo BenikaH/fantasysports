@@ -282,9 +282,11 @@ def retrieve_team_link_map():
                     team_link_map[link.get_text()] = link.get('href')
 
 
+@cache_disk()
 def retrieve_team_roster(team_name):
     """Retrieve the full roster of a specified team."""
     http = urllib3.PoolManager()
+    roster = {}
     r = http.urlopen(
         'GET', 'http://www.baseball-reference.com/teams/%s/2016-roster.shtml' %
         team_name,
@@ -295,8 +297,9 @@ def retrieve_team_roster(team_name):
         if len(row.find_all('th')) > 0:
                 continue
         cols = row.find_all('td')
-        cols = [ele.text.strip() for ele in cols]
-
+        if cols[2].find('strong'):
+            roster[cols[2].text.strip()] = cols[4].text.strip()
+    return roster
 
 
 def retrieve_most_recent_batting_order(team_name):

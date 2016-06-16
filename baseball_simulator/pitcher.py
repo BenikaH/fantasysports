@@ -31,6 +31,7 @@ class Pitcher(Player):
             self.name, pit_or_bat='p')
 
     def get_pitching_handedness(self):
+        """Return the handedness of the pitcher."""
         if conf.pitcher_handedness is None:
             conf.pitcher_handedness = dl.load_handedness_data('p')
         handedness = conf.pitcher_handedness.at[self.name, 'Throws']
