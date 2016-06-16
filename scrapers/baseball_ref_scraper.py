@@ -1,10 +1,11 @@
+"""Handles all scraping of baseball ref."""
+from __future__ import division
 from util.cache import cache_disk
 from bs4 import BeautifulSoup
 import urllib3
 import conf
 import pandas as pd
 from string import ascii_lowercase
-from util.cache import cache_disk
 import pdb
 import re
 
@@ -38,15 +39,102 @@ def retrieve_player_id_map():
 
 # ALL TODO FROM HERE ON
 
-# @cache_disk()
-def load_historical_player_handedness(player_name, year='Career'):
+
+@cache_disk()
+def load_handed_probabilities(player_name, start_year='2013', end_year='2016', pit_or_bat='b'):
+    hist = load_historical_player_handedness(player_name, start_year, pit_or_bat)
+    year = int(start_year) + 1
+    end_year = int(end_year)
+    while year <= end_year:
+        hist = hist.add(load_historical_player_handedness(
+            player_name, str(year), pit_or_bat), fill_value=0)
+        year += 1
+    if pit_or_bat == 'b':
+        single_count_rhp = (hist.at['RHP', 'H'] - (
+            hist.at['RHP', '2B'] + hist.at['RHP', '3B'] +
+            hist.at['RHP', 'HR']))
+        single_count_lhp = (hist.at['LHP', 'H'] - (
+            hist.at['LHP', '2B'] + hist.at['LHP', '3B'] +
+            hist.at['LHP', 'HR']))
+        probs = {
+            'RHP': {
+                'OUT': (hist.at['RHP', 'PA'] - (
+                    single_count_rhp + hist.at['RHP', '2B'] +
+                    hist.at['RHP', '3B'] + hist.at['RHP', 'HR'] +
+                    hist.at['RHP', 'BB'] + hist.at['RHP', 'SO'] +
+                    hist.at['RHP', 'HBP'])) / hist.at['RHP', 'PA'],
+                '1B': single_count_rhp / hist.at['RHP', 'PA'],
+                '2B': hist.at['RHP', '2B'] / hist.at['RHP', 'PA'],
+                '3B': hist.at['RHP', '3B'] / hist.at['RHP', 'PA'],
+                'HR': hist.at['RHP', 'HR'] / hist.at['RHP', 'PA'],
+                'BB': hist.at['RHP', 'BB'] / hist.at['RHP', 'PA'],
+                'SO': hist.at['RHP', 'SO'] / hist.at['RHP', 'PA'],
+                'HBP': hist.at['RHP', 'HBP'] / hist.at['RHP', 'PA']
+            },
+            'LHP': {
+                'OUT': (hist.at['LHP', 'PA'] - (
+                    single_count_lhp + hist.at['LHP', '2B'] +
+                    hist.at['LHP', '3B'] + hist.at['LHP', 'HR'] +
+                    hist.at['LHP', 'BB'] + hist.at['LHP', 'SO'] +
+                    hist.at['LHP', 'HBP'])) / hist.at['LHP', 'PA'],
+                '1B': single_count_lhp / hist.at['LHP', 'PA'],
+                '2B': hist.at['LHP', '2B'] / hist.at['LHP', 'PA'],
+                '3B': hist.at['LHP', '3B'] / hist.at['LHP', 'PA'],
+                'HR': hist.at['LHP', 'HR'] / hist.at['LHP', 'PA'],
+                'BB': hist.at['LHP', 'BB'] / hist.at['LHP', 'PA'],
+                'SO': hist.at['LHP', 'SO'] / hist.at['LHP', 'PA'],
+                'HBP': hist.at['LHP', 'HBP'] / hist.at['LHP', 'PA']
+            }
+        }
+    if pit_or_bat == 'p':
+        single_count_rhb = (hist.at['RHB', 'H'] - (
+            hist.at['RHB', '2B'] + hist.at['RHB', '3B'] +
+            hist.at['RHB', 'HR']))
+        single_count_lhb = (hist.at['LHB', 'H'] - (
+            hist.at['LHB', '2B'] + hist.at['LHB', '3B'] +
+            hist.at['LHB', 'HR']))
+        probs = {
+            'RHB': {
+                'OUT': (hist.at['RHB', 'PA'] - (
+                    single_count_rhb + hist.at['RHB', '2B'] +
+                    hist.at['RHB', '3B'] + hist.at['RHB', 'HR'] +
+                    hist.at['RHB', 'BB'] + hist.at['RHB', 'SO'] +
+                    hist.at['RHB', 'HBP'])) / hist.at['RHB', 'PA'],
+                '1B': single_count_rhb / hist.at['RHB', 'PA'],
+                '2B': hist.at['RHB', '2B'] / hist.at['RHB', 'PA'],
+                '3B': hist.at['RHB', '3B'] / hist.at['RHB', 'PA'],
+                'HR': hist.at['RHB', 'HR'] / hist.at['RHB', 'PA'],
+                'BB': hist.at['RHB', 'BB'] / hist.at['RHB', 'PA'],
+                'SO': hist.at['RHB', 'SO'] / hist.at['RHB', 'PA'],
+                'HBP': hist.at['RHB', 'HBP'] / hist.at['RHB', 'PA']
+            },
+            'LHB': {
+                'OUT': (hist.at['LHB', 'PA'] - (
+                    single_count_lhb + hist.at['LHB', '2B'] +
+                    hist.at['LHB', '3B'] + hist.at['LHB', 'HR'] +
+                    hist.at['LHB', 'BB'] + hist.at['LHB', 'SO'] +
+                    hist.at['LHB', 'HBP'])) / hist.at['LHB', 'PA'],
+                '1B': single_count_lhb / hist.at['LHB', 'PA'],
+                '2B': hist.at['LHB', '2B'] / hist.at['LHB', 'PA'],
+                '3B': hist.at['LHB', '3B'] / hist.at['LHB', 'PA'],
+                'HR': hist.at['LHB', 'HR'] / hist.at['LHB', 'PA'],
+                'BB': hist.at['LHB', 'BB'] / hist.at['LHB', 'PA'],
+                'SO': hist.at['LHB', 'SO'] / hist.at['LHB', 'PA'],
+                'HBP': hist.at['LHB', 'HBP'] / hist.at['LHB', 'PA']
+            }
+        }
+    return probs
+
+
+@cache_disk()
+def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'):
     if conf.player_id_map is None:
         conf.player_id_map = retrieve_player_id_map()
     http = urllib3.PoolManager()
     if player_name in conf.player_id_map:
         r = http.urlopen('GET',
-                         'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s' %
-                         (conf.player_id_map[player_name], year),
+                         'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
+                         (conf.player_id_map[player_name], year, pit_or_bat),
                          preload_content=False)
     soup = BeautifulSoup(r.data, 'html5lib')
     player_split_data = soup.find(id='plato').find_all('tr')
@@ -63,25 +151,36 @@ def load_historical_player_handedness(player_name, year='Career'):
         final_splits.append(cols)
     key = [sp[0] for sp in final_splits]
     final_splits = [sp[1:] for sp in final_splits]
-    cols = [
-        'G', 'GS', 'PA', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI',
-        'SB', 'CS', 'BB', 'SO', 'BA', 'OBP', 'SLG', 'OPS', 'TB', 'GDP',
-        'HBP', 'SH', 'SF', 'IBB', 'ROE', 'BAbip', 'tOPS+', 'sOPS+'
-    ]
+    if pit_or_bat == 'b':
+        cols = [
+            'G', 'GS', 'PA', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI',
+            'SB', 'CS', 'BB', 'SO', 'BA', 'OBP', 'SLG', 'OPS', 'TB', 'GDP',
+            'HBP', 'SH', 'SF', 'IBB', 'ROE', 'BAbip', 'tOPS+', 'sOPS+'
+        ]
+    if pit_or_bat == 'p':
+        cols = [
+            'G', 'PA', 'AB', 'R', 'H', '2B', '3B', 'HR', 'SB',
+            'CS', 'BB', 'SO', 'SO/W', 'BA', 'OBP', 'SLG', 'OPS', 'TB', 'GDP',
+            'HBP', 'SH', 'SF', 'IBB', 'ROE', 'BAbip', 'tOPS+', 'sOPS+'
+        ]
     if year == 'Career':
         cols.pop()
     splits_df = pd.DataFrame(final_splits, index=key, columns=cols)
+    splits_df = splits_df.apply(lambda x: pd.to_numeric(x, errors='ignore'))
     return splits_df
+
 
 @cache_disk()
 def load_historical_player_game_logs(player_name, year='2015'):
+    """Load logs of a player's games from a specific year."""
     if conf.player_id_map is None:
         conf.player_id_map = retrieve_player_id_map()
     http = urllib3.PoolManager()
     agg_stats = None
     if player_name in conf.player_id_map:
         r = http.urlopen('GET',
-                         'http://www.baseball-reference.com/players/gl.cgi?id=%s&t=b&year=%s' %
+                         'http://www.baseball-reference.com/players/gl.cgi?' +
+                         'id=%s&t=b&year=%s' %
                          (conf.player_id_map[player_name], year),
                          preload_content=False)
         soup = BeautifulSoup(r.data, 'html5lib')
@@ -117,8 +216,8 @@ def load_historical_player_game_logs(player_name, year='2015'):
     return gl_df, agg_stats
 
 
-# Same as above but with no caching
 def load_recent_player_game_logs(player_name):
+    """Load same as above but with no caching."""
     if conf.player_id_map is None:
         conf.player_id_map = retrieve_player_id_map()
     http = urllib3.PoolManager()
@@ -167,7 +266,7 @@ def load_recent_player_game_logs(player_name):
 
 @cache_disk()
 def retrieve_team_link_map():
-    # TODO
+    """Retrieve links related to teams."""
     http = urllib3.PoolManager()
     team_link_map = {}
     for char in ascii_lowercase:
@@ -183,9 +282,23 @@ def retrieve_team_link_map():
                     team_link_map[link.get_text()] = link.get('href')
 
 
+def retrieve_team_roster(team_name):
+    """Retrieve the full roster of a specified team."""
+    http = urllib3.PoolManager()
+    r = http.urlopen(
+        'GET', 'http://www.baseball-reference.com/teams/%s/2016-roster.shtml' %
+        team_name,
+        preload_content=False)
+    soup = BeautifulSoup(r.data, 'html5lib')
+    team_roster = soup.find(id='40man').find_all('tr')
+    for row in team_roster:
+        if len(row.find_all('th')) > 0:
+                continue
+        cols = row.find_all('td')
+        cols = [ele.text.strip() for ele in cols]
+
+
+
 def retrieve_most_recent_batting_order(team_name):
     """Return the most recent batting order of a particular team."""
-    return []
-
-def get_player_list(team_name):
     return []

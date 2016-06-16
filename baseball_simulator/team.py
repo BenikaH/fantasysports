@@ -14,9 +14,17 @@ class Team(object):
         """Initialization function."""
         self.players = self._retrieve_players(team_name)
         self.batting_order = self._retrieve_projected_batting_order(team_name)
+        for idx, player_name in enumerate(self.batting_order):
+            self.batting_order[idx] = Player(player_name)
 
     def get_player(self, batting_pos):
         return self.batting_order[batting_pos]
+
+    def get_named_batters(self):
+        arr = []
+        for player in self.batting_order:
+            arr.append(player.get_name())
+        return arr
 
     def _retrieve_players(self, name):
         player_name_list = brs.get_player_list(name)

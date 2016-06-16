@@ -1,59 +1,92 @@
+"""Holds player class."""
 import scrapers.baseball_ref_scraper as brs
+import util.data_loader as dl
+import conf
+
 
 class Player(object):
-	"""Main Player class."""
+    """Main Player class."""
 
     def __init__(self, name):
         """Initialization function."""
         self.game_logs = None
-        self.handedness_stats = None
         self.name = name
-        self.stats = {
-        	'SO': 0,
-        	'BB': 0,
-        	'HBP': 0,
-        	'H': 0,
-        	'R': 0,
-        	'1B': 0,
-        	'2B': 0,
-        	'3B': 0,
-        	'HR': 0,
-        	'RBI': 0
+        self.handedness = None
+        self.handedness_batting_stats = self._load_handedness_batting_stats()
+        self.bat_stats = {
+            'SO': 0,
+            'BB': 0,
+            'HBP': 0,
+            'H': 0,
+            'R': 0,
+            '1B': 0,
+            '2B': 0,
+            '3B': 0,
+            'HR': 0,
+            'RBI': 0
         }
 
-    def get_handedness_stats(self):
-    	return self.handed
+    def get_handed_batting_probs(self, opp_handedness):
+        """Return probabilities of batting outcomes."""
+        if opp_handedness == 'RIGHT':
+            return self.handedness_batting_stats['RHP']
+        else:
+            return self.handedness_batting_stats['LHP']
+
+    def _load_handedness_batting_stats(self):
+        return brs.load_handed_probabilities(self.name, pit_or_bat='b')
+
+    def get_batting_handedness(self):
+        """Return the handedness of the batter."""
+        if conf.batter_handedness is None:
+            conf.batter_handedness = dl.load_handedness_data('b')
+        handedness = conf.batter_handedness.at[self.name, 'Bats']
+        return handedness
 
     def get_name(self):
-    	return self.name
+        """Return name of batter."""
+        return self.name
+
+    def get_bat_stats(self):
+        """Return batting stats from simulated game."""
+        return self.bat_stats
 
     def add_run(self):
-    	self.stats['R'] += 1
+        """Add a run from the simulated game."""
+        self.bat_stats['R'] += 1
 
     def add_so(self):
-    	self.stats['SO'] += 1
+        """Add a strikeout from the simulated game."""
+        self.bat_stats['SO'] += 1
 
     def add_1b(self):
-    	self.stats['1B'] += 1
-    	self.stats['H'] += 1
-    
+        """Add a single from the simultated game."""
+        self.bat_stats['1B'] += 1
+        self.bat_stats['H'] += 1
+
     def add_2b(self):
-    	self.stats['2B'] += 1
-    	self.stats['H'] += 1
+        """Add a double from the simulated game."""
+        self.bat_stats['2B'] += 1
+        self.bat_stats['H'] += 1
 
     def add_3b(self):
-    	self.stats['3B'] += 1
-    	self.stats['H'] += 1
+        """Add a triple from the simulated game."""
+        self.bat_stats['3B'] += 1
+        self.bat_stats['H'] += 1
 
     def add_hr(self):
- 	   	self.stats['HR'] += 1
- 	   	self.stats['H'] += 1
+        """Add a home run from the simulated game."""
+        self.bat_stats['HR'] += 1
+        self.bat_stats['H'] += 1
 
     def add_rbi(self):
-    	self.stats['RBI'] += 1
+        """Add an rbi from the simulated game."""
+        self.bat_stats['RBI'] += 1
 
     def add_hbp(self):
-    	self.stats['HBP'] += 1
+        """Add a hit by pitch from the simulated game."""
+        self.bat_stats['HBP'] += 1
 
     def add_bb(self):
-    	self.stats['BB'] += 1
+        """Add a walk from the simulated game."""
+        self.bat_stats['BB'] += 1

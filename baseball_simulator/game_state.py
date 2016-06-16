@@ -1,8 +1,10 @@
 
 
 class GameState(object):
+    """Class to manage entire state of the game."""
 
     def __init__(self, inning=1):
+        """Initialize game state."""
         self.inning = inning
         self.sp_thrown_pitches = 0
         self.inn_stage = 'top'
@@ -11,18 +13,17 @@ class GameState(object):
         self.batting_pos = [0, 0]
         self.bases = [0, 0, 0]
         self.game_log = []
-        self.player_stats = {}
-        self.game_stats = {}
 
     def game_on(self):
-        if self.innings < 10 or (self.score[0] == self.score[1]) or\
+        """Return whether the game is ongoing."""
+        if self.inning < 10 or (self.score[0] == self.score[1]) or\
                 (self.score[0] > self.score[1] and self.inn_stage == 'bot'):
             return True
         else:
             return False
 
     def get_game_stats(self):
-        return self.game_log, self.player_stats, self.game_stats
+        return self.game_log
 
     def update_game(self, outcome, batter, pitcher):
         """Check and update according to batting outcome."""
@@ -56,7 +57,7 @@ class GameState(object):
             # if bases loaded
             elif self.bases_loaded():
                 self.add_run(self.bases[2])
-                self.game_log.append("%s.%d:Batter %s scores." % (
+                self.game_log.append("%s.%d: %s scores." % (
                     self.inn_stage, self.inning,
                     self.bases[2].get_name()))
                 self.bases[2] = self.bases[1]
@@ -176,9 +177,6 @@ class GameState(object):
             scoring_runner.get_name()))
         scoring_runner.add_run()
 
-    def add_out(self):
-        self.outs += 1
-
     def get_stage(self):
         return self.inn_stage
 
@@ -188,6 +186,7 @@ class GameState(object):
             self.inning += 1
         else:
             self.inn_stage == 'top'
+        self.bases = [0, 0, 0]
 
     def get_batting_pos(self):
         if self.inn_stage == 'top':

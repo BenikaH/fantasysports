@@ -6,10 +6,13 @@ chromedriver_path = './chromedriver'
 root_path = os.path.dirname(os.path.abspath(__file__))
 cache_path = os.path.join(root_path, 'cache')
 schedule_path = './data/schedule2016.txt'
-pitcher_handedness_path = './data/batter_handedness.csv'
-batter_handedness_path = './data/pitcher_handedness.csv'
+batter_handedness_path = './data/batter_handedness.csv'
+pitcher_handedness_path = './data/pitcher_handedness.csv'
 field_factors_path = './data/field_factors.csv'
 
+"""Simulator Configuration"""
+pitcher_handedness = None
+batter_handedness = None
 
 # 'fanduel' or 'draftkings'
 site = 'draftkings'
@@ -165,6 +168,12 @@ long_to_short_names = {
     'Arizona': 'ARI',
     'San Diego': 'SDP'
 }
+ 
+team_list = [
+    'BAL', 'BOS', 'TOR', 'NYY', 'TBR', 'CLE', 'DET', 'KCR', 'CWS', 'MIN',
+    'TEX', 'SEA', 'HOU', 'LAA', 'OAK', 'WAS', 'NYM', 'MIA', 'PHI', 'ATL',
+    'CHC', 'PIT', 'STL', 'MIL', 'CIN', 'SFG', 'LAD', 'COL', 'ARI', 'SDP'
+]
 
 # http://www.baseball-reference.com/leagues/MLB/2014.shtml
 league_totals = {
@@ -213,13 +222,13 @@ league_totals = {
         'OUT': 267516.0
     },
     'PROBS': {
-        'BB': 0.07735459696251108,
-        'HR': 0.024900892420759192,
-        'SO': 0.20201111453034773,
-        '2B': 0.044532338938870084,
-        '1B': 0.1536429954926416,
-        '3B': 0.00463407128504969,
-        'HBP': 0.008670781818510942,
-        'OUT': 0.48425320855130966
+        'BB': 0.077355,
+        'HR': 0.024901,
+        'SO': 0.202011,
+        '2B': 0.044532,
+        '1B': 0.153642,
+        '3B': 0.004634,
+        'HBP': 0.008671,
+        'OUT': 0.484253
     }
 }
