@@ -3,3 +3,4 @@ chromedriver
 */**/__init__.py
 venv/*
 cache/*
+.DS_Store

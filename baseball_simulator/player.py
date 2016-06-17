@@ -12,7 +12,18 @@ class Player(object):
         self.game_logs = None
         self.name = name
         self.handedness = None
+        if name == 'generic':
+            self.handedness = 'RIGHT'
+            self.handedness_batting_stats = {}
+            self.handedness_batting_stats['RHP'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['LHP'] = conf.league_totals['PROBS']
+            return
         self.handedness_batting_stats = self._load_handedness_batting_stats()
+        # DEFAULT TO LEAGUE AVERAGE: FIX TO LOWER THRESHOLD
+        if self.handedness_batting_stats is None:
+            self.handedness_batting_stats = {}
+            self.handedness_batting_stats['RHP'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['LHP'] = conf.league_totals['PROBS']
         self.bat_stats = {
             'SO': 0,
             'BB': 0,
@@ -34,7 +45,8 @@ class Player(object):
             return self.handedness_batting_stats['LHP']
 
     def _load_handedness_batting_stats(self):
-        return brs.load_handed_probabilities(self.name, pit_or_bat='b')
+        brs.load_handed_probabilities(self.name, pit_or_bat='b')
+        return 
 
     def get_batting_handedness(self):
         """Return the handedness of the batter."""

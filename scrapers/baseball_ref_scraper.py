@@ -42,13 +42,32 @@ def retrieve_player_id_map():
 
 @cache_disk()
 def load_handed_probabilities(player_name, start_year='2013', end_year='2016', pit_or_bat='b'):
-    hist = load_historical_player_handedness(player_name, start_year, pit_or_bat)
+    ha = load_historical_player_handedness(player_name, start_year, pit_or_bat)
+    hist = None
+    if ha is not None:
+        hist = ha
     year = int(start_year) + 1
     end_year = int(end_year)
     while year <= end_year:
-        hist = hist.add(load_historical_player_handedness(
-            player_name, str(year), pit_or_bat), fill_value=0)
+        hand = load_historical_player_handedness(
+            player_name, str(year), pit_or_bat)
+        if hand is not None:
+            if hist is not None:
+                hist = hist.add(hand, fill_value=0)
+            else:
+                hist = hand
         year += 1
+    if hist is None or 'RHP' not in hist or 'LHP' not in hist:
+        return {
+            'RHP': {
+                'OUT': .6,
+                'SO': .4
+            },
+            'LHP': {
+                'OUT': .6,
+                'SO': .4
+            }
+        }
     if pit_or_bat == 'b':
         single_count_rhp = (hist.at['RHP', 'H'] - (
             hist.at['RHP', '2B'] + hist.at['RHP', '3B'] +
@@ -136,8 +155,14 @@ def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
                          (conf.player_id_map[player_name], year, pit_or_bat),
                          preload_content=False)
+    else:
+        print "Player %s not found in Baseball Reference." % player_name
+        return None
     soup = BeautifulSoup(r.data, 'html5lib')
-    player_split_data = soup.find(id='plato').find_all('tr')
+    if soup.find(id='plato'):
+        player_split_data = soup.find(id='plato').find_all('tr')
+    else:
+        return None
     final_splits = []
     for row in player_split_data:
         if len(row.find_all('th')) > 0:
@@ -295,7 +320,7 @@ def retrieve_team_roster(team_name):
     team_roster = soup.find(id='40man').find_all('tr')
     for row in team_roster:
         if len(row.find_all('th')) > 0:
-                continue
+            continue
         cols = row.find_all('td')
         if cols[2].find('strong'):
             roster[cols[2].text.strip()] = cols[4].text.strip()
@@ -304,4 +329,55 @@ def retrieve_team_roster(team_name):
 
 def retrieve_most_recent_batting_order(team_name):
     """Return the most recent batting order of a particular team."""
-    return []
+    http = urllib3.PoolManager()
+    bo = []
+    r = http.urlopen(
+        'GET', 'http://rotochamp.com/baseball/TeamPage.aspx?TeamID=%s' %
+        team_name,
+        preload_content=False)
+    soup = BeautifulSoup(r.data, 'html5lib')
+    order = soup.find(id='MainContent_gridProjectedLineup').find_all('tr')
+    for row in order:
+        if len(row.find_all('th')) > 0:
+            continue
+        cols = row.find_all('td')
+        bo.append(cols[1].text.strip())
+    return bo
+
+
+def retrieve_pitching_rotation(team_name):
+    http = urllib3.PoolManager()
+    b_rotation = []
+    r = http.urlopen(
+        'GET', 'http://rotochamp.com/baseball/TeamPage.aspx?TeamID=%s' %
+        team_name,
+        preload_content=False)
+    soup = BeautifulSoup(r.data, 'html5lib')
+    rotation = soup.find(id='MainContent_gridProjectedRotation').find_all('tr')
+    for row in rotation:
+        if len(row.find_all('th')) > 0:
+            continue
+        cols = row.find_all('td')
+        b_rotation.append(cols[1].text.strip())
+    return b_rotation
+
+
+def load_team_bullpen(team_name):
+    """Load current team bullpen."""
+    http = urllib3.PoolManager()
+    bullpen = []
+    col_headers = None
+    r = http.urlopen(
+        'GET', 'http://rotochamp.com/baseball/TeamPage.aspx?TeamID=%s' %
+        team_name,
+        preload_content=False)
+    soup = BeautifulSoup(r.data, 'html5lib')
+    order = soup.find(id='MainContent_gridBullpen').find_all('tr')
+    for row in order:
+        if len(row.find_all('th')) > 0:
+            cols = row.find_all('th')
+            col_headers = [ele.text.strip() for ele in cols]
+        else:
+            cols = row.find_all('td')
+            bullpen.append([ele.text.strip() for ele in cols])
+    return pd.DataFrame(bullpen, columns=col_headers)

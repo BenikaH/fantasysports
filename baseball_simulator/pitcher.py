@@ -12,6 +12,10 @@ class Pitcher(Player):
         """Initialization function."""
         super(Pitcher, self).__init__(name)
         self.handedness_pitching_stats = self._load_handedness_pitching_stats()
+        if self.handedness_pitching_stats:
+            self.handedness_pitching_stats = {}
+            self.handedness_pitching_stats['RHB'] = conf.league_totals['PROBS']
+            self.handedness_pitching_stats['LHB'] = conf.league_totals['PROBS']
         self.pitch_stats = {
             'SO': 0,
             'BB': 0,
@@ -34,7 +38,11 @@ class Pitcher(Player):
         """Return the handedness of the pitcher."""
         if conf.pitcher_handedness is None:
             conf.pitcher_handedness = dl.load_handedness_data('p')
-        handedness = conf.pitcher_handedness.at[self.name, 'Throws']
+        try:
+            handedness = conf.pitcher_handedness.at[self.name, 'Throws']
+        except:
+            raise ValueError('Pitcher %s handedness not included in doc.' %
+                             self.name)
         return handedness
 
     def add_pitch_so(self):

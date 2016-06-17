@@ -15,11 +15,9 @@ def load_mlb_schedule():
                       )
     return df
 
-
-@cache_disk()
 def load_handedness_data(pit_or_bat='b'):
     if pit_or_bat == 'p':
-        hand = open(conf.pitcher_handedness_path)
+        hand = open(conf.pitcher_handedness_path, 'rU')
     elif pit_or_bat == 'b':
         hand = open(conf.batter_handedness_path, 'rU')
     else:

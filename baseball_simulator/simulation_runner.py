@@ -21,7 +21,7 @@ def run_simulation(away_team_name, home_team_name, starting_inn=1):
             batter = home_team.get_player(gs.batting_pos[1])
             pitcher = away_team.get_pitcher()
             outcome = play_batter(gs, batter, pitcher)
-        gs.update_game(outcome)
+        gs.update_game(outcome, batter, pitcher)
     return gs.get_game_stats()
 
 
