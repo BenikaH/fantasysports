@@ -15,6 +15,7 @@ def load_mlb_schedule():
                       )
     return df
 
+
 def load_handedness_data(pit_or_bat='b'):
     if pit_or_bat == 'p':
         hand = open(conf.pitcher_handedness_path, 'rU')
@@ -24,7 +25,7 @@ def load_handedness_data(pit_or_bat='b'):
         raise ValueError('Please specify "p" or "b" for handedness type.')
     data = csv.reader(hand)
     data_entries = [entry for entry in data]
-    names = [entry[0] for entry in data_entries]
+    names = [str(entry[0]) for entry in data_entries]
     data_entries = [entry[1:] for entry in data_entries]
     if pit_or_bat == 'b':
         df = pd.DataFrame(data_entries,

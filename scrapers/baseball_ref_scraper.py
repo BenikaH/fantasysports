@@ -57,89 +57,104 @@ def load_handed_probabilities(player_name, start_year='2013', end_year='2016', p
             else:
                 hist = hand
         year += 1
-    if hist is None or 'RHP' not in hist or 'LHP' not in hist:
+    try:
+        if pit_or_bat == 'b':
+            single_count_rhp = (hist.at['RHP', 'H'] - (
+                hist.at['RHP', '2B'] + hist.at['RHP', '3B'] +
+                hist.at['RHP', 'HR']))
+            single_count_lhp = (hist.at['LHP', 'H'] - (
+                hist.at['LHP', '2B'] + hist.at['LHP', '3B'] +
+                hist.at['LHP', 'HR']))
+            probs = {
+                'RHP': {
+                    'OUT': (hist.at['RHP', 'PA'] - (
+                        single_count_rhp + hist.at['RHP', '2B'] +
+                        hist.at['RHP', '3B'] + hist.at['RHP', 'HR'] +
+                        hist.at['RHP', 'BB'] + hist.at['RHP', 'SO'] +
+                        hist.at['RHP', 'HBP'])) / hist.at['RHP', 'PA'],
+                    '1B': single_count_rhp / hist.at['RHP', 'PA'],
+                    '2B': hist.at['RHP', '2B'] / hist.at['RHP', 'PA'],
+                    '3B': hist.at['RHP', '3B'] / hist.at['RHP', 'PA'],
+                    'HR': hist.at['RHP', 'HR'] / hist.at['RHP', 'PA'],
+                    'BB': hist.at['RHP', 'BB'] / hist.at['RHP', 'PA'],
+                    'SO': hist.at['RHP', 'SO'] / hist.at['RHP', 'PA'],
+                    'HBP': hist.at['RHP', 'HBP'] / hist.at['RHP', 'PA']
+                },
+                'LHP': {
+                    'OUT': (hist.at['LHP', 'PA'] - (
+                        single_count_lhp + hist.at['LHP', '2B'] +
+                        hist.at['LHP', '3B'] + hist.at['LHP', 'HR'] +
+                        hist.at['LHP', 'BB'] + hist.at['LHP', 'SO'] +
+                        hist.at['LHP', 'HBP'])) / hist.at['LHP', 'PA'],
+                    '1B': single_count_lhp / hist.at['LHP', 'PA'],
+                    '2B': hist.at['LHP', '2B'] / hist.at['LHP', 'PA'],
+                    '3B': hist.at['LHP', '3B'] / hist.at['LHP', 'PA'],
+                    'HR': hist.at['LHP', 'HR'] / hist.at['LHP', 'PA'],
+                    'BB': hist.at['LHP', 'BB'] / hist.at['LHP', 'PA'],
+                    'SO': hist.at['LHP', 'SO'] / hist.at['LHP', 'PA'],
+                    'HBP': hist.at['LHP', 'HBP'] / hist.at['LHP', 'PA']
+                }
+            }
+        if pit_or_bat == 'p':
+            single_count_rhb = (hist.at['RHB', 'H'] - (
+                hist.at['RHB', '2B'] + hist.at['RHB', '3B'] +
+                hist.at['RHB', 'HR']))
+            single_count_lhb = (hist.at['LHB', 'H'] - (
+                hist.at['LHB', '2B'] + hist.at['LHB', '3B'] +
+                hist.at['LHB', 'HR']))
+            probs = {
+                'RHB': {
+                    'OUT': (hist.at['RHB', 'PA'] - (
+                        single_count_rhb + hist.at['RHB', '2B'] +
+                        hist.at['RHB', '3B'] + hist.at['RHB', 'HR'] +
+                        hist.at['RHB', 'BB'] + hist.at['RHB', 'SO'] +
+                        hist.at['RHB', 'HBP'])) / hist.at['RHB', 'PA'],
+                    '1B': single_count_rhb / hist.at['RHB', 'PA'],
+                    '2B': hist.at['RHB', '2B'] / hist.at['RHB', 'PA'],
+                    '3B': hist.at['RHB', '3B'] / hist.at['RHB', 'PA'],
+                    'HR': hist.at['RHB', 'HR'] / hist.at['RHB', 'PA'],
+                    'BB': hist.at['RHB', 'BB'] / hist.at['RHB', 'PA'],
+                    'SO': hist.at['RHB', 'SO'] / hist.at['RHB', 'PA'],
+                    'HBP': hist.at['RHB', 'HBP'] / hist.at['RHB', 'PA']
+                },
+                'LHB': {
+                    'OUT': (hist.at['LHB', 'PA'] - (
+                        single_count_lhb + hist.at['LHB', '2B'] +
+                        hist.at['LHB', '3B'] + hist.at['LHB', 'HR'] +
+                        hist.at['LHB', 'BB'] + hist.at['LHB', 'SO'] +
+                        hist.at['LHB', 'HBP'])) / hist.at['LHB', 'PA'],
+                    '1B': single_count_lhb / hist.at['LHB', 'PA'],
+                    '2B': hist.at['LHB', '2B'] / hist.at['LHB', 'PA'],
+                    '3B': hist.at['LHB', '3B'] / hist.at['LHB', 'PA'],
+                    'HR': hist.at['LHB', 'HR'] / hist.at['LHB', 'PA'],
+                    'BB': hist.at['LHB', 'BB'] / hist.at['LHB', 'PA'],
+                    'SO': hist.at['LHB', 'SO'] / hist.at['LHB', 'PA'],
+                    'HBP': hist.at['LHB', 'HBP'] / hist.at['LHB', 'PA']
+                }
+            }
+    except:
+        # fallback to below average hitting stats
+        print "No hitting stats found for %s." % player_name
         return {
-            'RHP': {
-                'OUT': .6,
-                'SO': .4
-            },
             'LHP': {
-                'OUT': .6,
-                'SO': .4
-            }
-        }
-    if pit_or_bat == 'b':
-        single_count_rhp = (hist.at['RHP', 'H'] - (
-            hist.at['RHP', '2B'] + hist.at['RHP', '3B'] +
-            hist.at['RHP', 'HR']))
-        single_count_lhp = (hist.at['LHP', 'H'] - (
-            hist.at['LHP', '2B'] + hist.at['LHP', '3B'] +
-            hist.at['LHP', 'HR']))
-        probs = {
+                'OUT': .50,
+                '1B': .105,
+                '2B': .03,
+                '3B': .004,
+                'HR': .01,
+                'BB': .05,
+                'SO': .25,
+                'HBP': .001
+            },
             'RHP': {
-                'OUT': (hist.at['RHP', 'PA'] - (
-                    single_count_rhp + hist.at['RHP', '2B'] +
-                    hist.at['RHP', '3B'] + hist.at['RHP', 'HR'] +
-                    hist.at['RHP', 'BB'] + hist.at['RHP', 'SO'] +
-                    hist.at['RHP', 'HBP'])) / hist.at['RHP', 'PA'],
-                '1B': single_count_rhp / hist.at['RHP', 'PA'],
-                '2B': hist.at['RHP', '2B'] / hist.at['RHP', 'PA'],
-                '3B': hist.at['RHP', '3B'] / hist.at['RHP', 'PA'],
-                'HR': hist.at['RHP', 'HR'] / hist.at['RHP', 'PA'],
-                'BB': hist.at['RHP', 'BB'] / hist.at['RHP', 'PA'],
-                'SO': hist.at['RHP', 'SO'] / hist.at['RHP', 'PA'],
-                'HBP': hist.at['RHP', 'HBP'] / hist.at['RHP', 'PA']
-            },
-            'LHP': {
-                'OUT': (hist.at['LHP', 'PA'] - (
-                    single_count_lhp + hist.at['LHP', '2B'] +
-                    hist.at['LHP', '3B'] + hist.at['LHP', 'HR'] +
-                    hist.at['LHP', 'BB'] + hist.at['LHP', 'SO'] +
-                    hist.at['LHP', 'HBP'])) / hist.at['LHP', 'PA'],
-                '1B': single_count_lhp / hist.at['LHP', 'PA'],
-                '2B': hist.at['LHP', '2B'] / hist.at['LHP', 'PA'],
-                '3B': hist.at['LHP', '3B'] / hist.at['LHP', 'PA'],
-                'HR': hist.at['LHP', 'HR'] / hist.at['LHP', 'PA'],
-                'BB': hist.at['LHP', 'BB'] / hist.at['LHP', 'PA'],
-                'SO': hist.at['LHP', 'SO'] / hist.at['LHP', 'PA'],
-                'HBP': hist.at['LHP', 'HBP'] / hist.at['LHP', 'PA']
-            }
-        }
-    if pit_or_bat == 'p':
-        single_count_rhb = (hist.at['RHB', 'H'] - (
-            hist.at['RHB', '2B'] + hist.at['RHB', '3B'] +
-            hist.at['RHB', 'HR']))
-        single_count_lhb = (hist.at['LHB', 'H'] - (
-            hist.at['LHB', '2B'] + hist.at['LHB', '3B'] +
-            hist.at['LHB', 'HR']))
-        probs = {
-            'RHB': {
-                'OUT': (hist.at['RHB', 'PA'] - (
-                    single_count_rhb + hist.at['RHB', '2B'] +
-                    hist.at['RHB', '3B'] + hist.at['RHB', 'HR'] +
-                    hist.at['RHB', 'BB'] + hist.at['RHB', 'SO'] +
-                    hist.at['RHB', 'HBP'])) / hist.at['RHB', 'PA'],
-                '1B': single_count_rhb / hist.at['RHB', 'PA'],
-                '2B': hist.at['RHB', '2B'] / hist.at['RHB', 'PA'],
-                '3B': hist.at['RHB', '3B'] / hist.at['RHB', 'PA'],
-                'HR': hist.at['RHB', 'HR'] / hist.at['RHB', 'PA'],
-                'BB': hist.at['RHB', 'BB'] / hist.at['RHB', 'PA'],
-                'SO': hist.at['RHB', 'SO'] / hist.at['RHB', 'PA'],
-                'HBP': hist.at['RHB', 'HBP'] / hist.at['RHB', 'PA']
-            },
-            'LHB': {
-                'OUT': (hist.at['LHB', 'PA'] - (
-                    single_count_lhb + hist.at['LHB', '2B'] +
-                    hist.at['LHB', '3B'] + hist.at['LHB', 'HR'] +
-                    hist.at['LHB', 'BB'] + hist.at['LHB', 'SO'] +
-                    hist.at['LHB', 'HBP'])) / hist.at['LHB', 'PA'],
-                '1B': single_count_lhb / hist.at['LHB', 'PA'],
-                '2B': hist.at['LHB', '2B'] / hist.at['LHB', 'PA'],
-                '3B': hist.at['LHB', '3B'] / hist.at['LHB', 'PA'],
-                'HR': hist.at['LHB', 'HR'] / hist.at['LHB', 'PA'],
-                'BB': hist.at['LHB', 'BB'] / hist.at['LHB', 'PA'],
-                'SO': hist.at['LHB', 'SO'] / hist.at['LHB', 'PA'],
-                'HBP': hist.at['LHB', 'HBP'] / hist.at['LHB', 'PA']
+                'OUT': .50,
+                '1B': .105,
+                '2B': .03,
+                '3B': .004,
+                'HR': .01,
+                'BB': .05,
+                'SO': .25,
+                'HBP': .001
             }
         }
     return probs
@@ -149,15 +164,22 @@ def load_handed_probabilities(player_name, start_year='2013', end_year='2016', p
 def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'):
     if conf.player_id_map is None:
         conf.player_id_map = retrieve_player_id_map()
+    if player_name in conf.known_player_conversions:
+        player_name = conf.known_player_conversions[player_name]
     http = urllib3.PoolManager()
     if player_name in conf.player_id_map:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
                          (conf.player_id_map[player_name], year, pit_or_bat),
                          preload_content=False)
+    elif player_name in conf.known_player_conversions and\
+            conf.known_player_conversions[player_name] in conf.player_id_map:
+        r = http.urlopen('GET',
+                         'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
+                         (conf.player_id_map[player_name], year, pit_or_bat),
+                         preload_content=False)
     else:
-        print "Player %s not found in Baseball Reference." % player_name
-        return None
+        raise ValueError("Player %s not found in Baseball Reference." % player_name)
     soup = BeautifulSoup(r.data, 'html5lib')
     if soup.find(id='plato'):
         player_split_data = soup.find(id='plato').find_all('tr')
@@ -292,6 +314,8 @@ def load_recent_player_game_logs(player_name):
 @cache_disk()
 def retrieve_team_link_map():
     """Retrieve links related to teams."""
+    if team_name in conf.bb_ref_teams:
+        team_name = conf.bb_ref_teams[team_name]
     http = urllib3.PoolManager()
     team_link_map = {}
     for char in ascii_lowercase:
@@ -310,6 +334,8 @@ def retrieve_team_link_map():
 @cache_disk()
 def retrieve_team_roster(team_name):
     """Retrieve the full roster of a specified team."""
+    if team_name in conf.bb_ref_teams:
+        team_name = conf.bb_ref_teams[team_name]
     http = urllib3.PoolManager()
     roster = {}
     r = http.urlopen(
@@ -329,6 +355,8 @@ def retrieve_team_roster(team_name):
 
 def retrieve_most_recent_batting_order(team_name):
     """Return the most recent batting order of a particular team."""
+    if team_name in conf.rotochamp_teams:
+        team_name = conf.rotochamp_teams[team_name]
     http = urllib3.PoolManager()
     bo = []
     r = http.urlopen(
@@ -346,6 +374,8 @@ def retrieve_most_recent_batting_order(team_name):
 
 
 def retrieve_pitching_rotation(team_name):
+    if team_name in conf.rotochamp_teams:
+        team_name = conf.rotochamp_teams[team_name]
     http = urllib3.PoolManager()
     b_rotation = []
     r = http.urlopen(
@@ -364,6 +394,8 @@ def retrieve_pitching_rotation(team_name):
 
 def load_team_bullpen(team_name):
     """Load current team bullpen."""
+    if team_name in conf.rotochamp_teams:
+        team_name = conf.rotochamp_teams[team_name]
     http = urllib3.PoolManager()
     bullpen = []
     col_headers = None

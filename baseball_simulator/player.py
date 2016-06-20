@@ -2,6 +2,7 @@
 import scrapers.baseball_ref_scraper as brs
 import util.data_loader as dl
 import conf
+import pdb
 
 
 class Player(object):
@@ -45,8 +46,7 @@ class Player(object):
             return self.handedness_batting_stats['LHP']
 
     def _load_handedness_batting_stats(self):
-        brs.load_handed_probabilities(self.name, pit_or_bat='b')
-        return 
+        return brs.load_handed_probabilities(self.name, pit_or_bat='b')
 
     def get_batting_handedness(self):
         """Return the handedness of the batter."""

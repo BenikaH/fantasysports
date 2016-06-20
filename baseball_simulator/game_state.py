@@ -1,3 +1,5 @@
+import util.score_calculators as sc
+import pandas as pd
 
 
 class GameState(object):
@@ -6,7 +8,6 @@ class GameState(object):
     def __init__(self, inning=1):
         """Initialize game state."""
         self.inning = inning
-        self.sp_thrown_pitches = 0
         self.inn_stage = 'top'
         self.outs = 0
         self.score = [0, 0]
@@ -22,15 +23,39 @@ class GameState(object):
         else:
             return False
 
-    def get_game_stats(self):
-        return self.game_log
+    def get_game_stats(self, away_team, home_team):
+        away_pit = self._get_pitcher_stats(away_team.get_pitcher())
+        home_pit = self._get_pitcher_stats(home_team.get_pitcher())
+        pitcher_stats = pd.DataFrame(
+            [[away_team.get_name()] + away_pit, [home_team.get_name()] + home_pit],
+            columns=['Team', 'Name', 'SO', 'BB', 'HA', 'ER', 'HBP', 'FDP', 'DKP']
+        )
+        # away_batters_stats = _load_batter_stats(away_team)
+        # home_batters_stats = _load_batter_stats(home_team)
+        return self.game_log, self.score, pitcher_stats #, batter_stats
+
+    def _get_pitcher_stats(self, pitcher):
+        pit_stats = pitcher.get_pitch_stats()
+        return [
+            pitcher.get_name(),
+            pit_stats['SO'],
+            pit_stats['BB'],
+            pit_stats['HA'],
+            pit_stats['ER'],
+            pit_stats['HBP'],
+            sc.calculate_fanduel_pitcher_score(
+                pit_stats['ER'],
+                9,
+                pit_stats['SO'],
+                0),
+            'TODO'
+        ]
 
     def update_game(self, outcome, batter, pitcher):
         """Check and update according to batting outcome."""
         # OUT
         if outcome == 'OUT':
             self.outs += 1
-            self.sp_thrown_pitches += 3.83
             self.game_log.append(
                 "%s.%d: Batter %s hits into an out." % (
                     self.inn_stage, self.inning, batter.get_name()))
@@ -41,22 +66,24 @@ class GameState(object):
                 "%s.%d: Batter %s strikes out against %s." % (
                     self.inn_stage, self.inning, batter.get_name(),
                     pitcher.get_name()))
+            pitcher.add_pitch_so()
             batter.add_so()
-            self.sp_thrown_pitches += 5
         # WALK OR HBP
         elif outcome == 'BB' or outcome == 'HBP':
             if outcome == 'BB':
                 self.game_log.append("Batter %s walks." % batter.get_name())
+                pitcher.add_pitch_bb()
                 batter.add_bb()
             elif outcome == 'HBP':
                 self.game_log.append("Batter %s is hit by pitcher." % batter.get_name())
+                pitcher.add_pitch_hbp()
                 batter.add_hbp()
             # if noone on first
             if self.bases[0] == 0:
                 self.bases[0] == batter
             # if bases loaded
             elif self.bases_loaded():
-                self.add_run(self.bases[2])
+                self.add_run(self.bases[2], pitcher)
                 self.game_log.append("%s.%d: %s scores." % (
                     self.inn_stage, self.inning,
                     self.bases[2].get_name()))
@@ -74,13 +101,14 @@ class GameState(object):
             self.bases[0] = batter
         # SINGLE
         elif outcome == '1B':
+            pitcher.add_pitch_ha()
             self.game_log.append("%s.%d:Batter %s singles." % (
                 self.inn_stage, self.inning, batter.get_name()))
             batter.add_1b()
             # advance runners
             # everyone moves forward 1 (may adapt later)
             if self.bases[2] != 0:
-                self.add_run(self.bases[2])
+                self.add_run(self.bases[2], pitcher)
                 batter.add_rbi()
                 self.bases[2] = 0
             if self.bases[1] != 0:
@@ -92,12 +120,13 @@ class GameState(object):
             self.bases[0] = batter
         # DOUBLE
         elif outcome == '2B':
+            pitcher.add_pitch_ha()
             if self.bases[2] != 0:
-                self.add_run(self.bases[2])
+                self.add_run(self.bases[2], pitcher)
                 batter.add_rbi()
                 self.bases[2] = 0
             if self.bases[1] != 0:
-                self.add_run(self.bases[1])
+                self.add_run(self.bases[1], pitcher)
                 batter.add_rbi()
                 self.bases[1] = 0
             if self.bases[0] != 0:
@@ -106,40 +135,42 @@ class GameState(object):
             self.bases[1] = batter
         # TRIPLE
         elif outcome == '3B':
+            pitcher.add_pitch_ha()
             if self.bases[2] != 0:
-                self.add_run(self.bases[2])
+                self.add_run(self.bases[2], pitcher)
                 batter.add_rbi()
                 self.bases[2] = 0
             if self.bases[1] != 0:
-                self.add_run(self.bases[1])
+                self.add_run(self.bases[1], pitcher)
                 batter.add_rbi()
                 self.bases[1] = 0
             if self.bases[0] != 0:
-                self.add_run(self.bases[0])
+                self.add_run(self.bases[0], pitcher)
                 batter.add_rbi()
                 self.bases[0] = 0
             self.bases[2] = batter
         # HOME RUN
         elif outcome == 'HR':
+            pitcher.add_pitch_ha()
             if self.bases[2] != 0:
-                self.add_run(self.bases[2])
+                self.add_run(self.bases[2], pitcher)
                 batter.add_rbi()
                 self.bases[2] = 0
             if self.bases[1] != 0:
-                self.add_run(self.bases[1])
+                self.add_run(self.bases[1], pitcher)
                 batter.add_rbi()
                 self.bases[1] = 0
             if self.bases[0] != 0:
-                self.add_run(self.bases[0])
+                self.add_run(self.bases[0], pitcher)
                 batter.add_rbi()
                 self.bases[0] = 0
             # update batter stats
             batter.add_hr()
             batter.add_rbi()
-            self.add_run(batter)
+            self.add_run(batter, pitcher)
         # check inning and update
         if self.outs == 3:
-            self.start_new_inning()
+            self.update_inning()
 
     def bases_loaded(self):
         if 0 not in self.bases:
@@ -153,21 +184,13 @@ class GameState(object):
                 return True
         return False
 
-    def start_new_inning(self):
-        self.outs = 0
-        if self.inn_stage == 'top':
-            self.inn_stage = 'bot'
-        else:
-            self.inn_stage = 'top'
-            self.inning += 1
-
     def get_outs(self):
         return self.outs
 
     def add_out(self):
         self.outs += 1
 
-    def add_run(self, scoring_runner):
+    def add_run(self, scoring_runner, pitcher):
         if self.inn_stage == 'top':
             self.score[0] += 1
         else:
@@ -176,16 +199,19 @@ class GameState(object):
             self.inn_stage, self.inning,
             scoring_runner.get_name()))
         scoring_runner.add_run()
+        pitcher.add_pitch_er()
 
     def get_stage(self):
         return self.inn_stage
 
     def update_inning(self):
         if self.inn_stage == 'bot':
+            self.game_log.append('End of inning %s.' % self.inning)
             self.inn_stage = 'top'
             self.inning += 1
         else:
-            self.inn_stage == 'top'
+            self.inn_stage = 'bot'
+        self.outs = 0
         self.bases = [0, 0, 0]
 
     def get_batting_pos(self):

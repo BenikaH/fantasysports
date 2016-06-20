@@ -24,6 +24,9 @@ class Pitcher(Player):
             'ER': 0
         }
 
+    def get_pitch_stats(self):
+        return self.pitch_stats
+
     def get_handed_pitching_probs(self, opp_handedness):
         if opp_handedness == 'RIGHT':
             return self.handedness_pitching_stats['RHB']
@@ -39,10 +42,11 @@ class Pitcher(Player):
         if conf.pitcher_handedness is None:
             conf.pitcher_handedness = dl.load_handedness_data('p')
         try:
-            handedness = conf.pitcher_handedness.at[self.name, 'Throws']
+            handedness = conf.pitcher_handedness.at[str(self.name), 'Throws']
         except:
             raise ValueError('Pitcher %s handedness not included in doc.' %
                              self.name)
+            # pdb.set_trace()
         return handedness
 
     def add_pitch_so(self):
@@ -56,3 +60,6 @@ class Pitcher(Player):
 
     def add_pitch_bb(self):
         self.pitch_stats['BB'] += 1
+
+    def add_pitch_er(self):
+        self.pitch_stats['ER'] += 1

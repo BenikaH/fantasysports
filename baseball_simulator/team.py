@@ -5,6 +5,7 @@ from scrapers import baseball_ref_scraper as brs
 from player import Player
 from pitcher import Pitcher
 import util.util as util
+import pdb
 import conf
 
 
@@ -13,28 +14,36 @@ class Team(object):
 
     def __init__(self, team_name):
         """Initialization function."""
-        # self.players = self._retrieve_players(team_name)
+        self.name = util.standardize_team_name(team_name)
         self.batting_order, pit_rot = self._retrieve_projected_batting_order(
             team_name)
         self.roster = self._load_team_roster(team_name)
-        self.pitcher = self.roster[pit_rot[0]]
+        if pit_rot[0] in self.roster:
+            self.pitcher = self.roster[pit_rot[0]]
+        else:
+            self.pitcher = Pitcher(pit_rot[0])
         self.bullpen = brs.load_team_bullpen(team_name)
         for idx, player_name in enumerate(self.batting_order):
             if player_name in self.roster:
                 self.batting_order[idx] = self.roster[player_name]
             else:
-                self.batting_order[idx] = Player(player_name)
-                # self.batting_order[idx] = Player('generic')
+                pl = Player(str(player_name))
+                self.batting_order[idx] = pl
+                # add them to the roster
+                self.roster[player_name] = pl
 
     def _load_team_roster(self, team_name):
         """Load team's roster."""
-        roster = brs.retrieve_team_roster(team_name)
+        roster = brs.retrieve_team_roster(conf.bb_ref_teams[team_name])
         for p_name in roster:
             if roster[p_name] == 'Pitcher':
-                roster[p_name] = Pitcher(p_name)
+                roster[p_name] = Pitcher(str(p_name))
             else:
-                roster[p_name] = Player(p_name)
+                roster[p_name] = Player(str(p_name))
         return roster
+
+    def get_name(self):
+        return self.name
 
     def get_pitcher(self):
         return self.pitcher
@@ -48,17 +57,11 @@ class Team(object):
             arr.append(player.get_name())
         return arr
 
-    # def _retrieve_players(self, name):
-    #     player_name_list = brs.get_player_list(name)
-    #     players = {}
-    #     for name in player_name_list:
-    #         players[name] = Player(name)
-    #     return []
-
     def _retrieve_projected_batting_order(self, name):
         batting_orders = retrieve_mlb_batting_order()
         team_batting_order = None
-        team_pitching_rotation = brs.retrieve_pitching_rotation(name)
+        team_pitching_rotation = brs.retrieve_pitching_rotation(
+            name)
         try:
             team_batting_order = batting_orders[
                 util.standardize_team_name(name)]

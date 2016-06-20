@@ -15,7 +15,7 @@ pitcher_handedness = None
 batter_handedness = None
 
 # 'fanduel' or 'draftkings'
-site = 'fanduel'
+site = 'draftkings'
 include_numberfire = False
 
 
@@ -73,10 +73,10 @@ stack_bonus = 7.0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
-excluded_batters = ['Daniel Murphy', 'Ryan Zimmerman']
-use_inclusion = False
-included_teams = []
-excluded_teams = ['ATL', 'CIN']
+excluded_batters = []
+use_inclusion = True
+included_teams = ['LAA', 'OAK', 'MIL', 'LAD', 'WAS', 'SDP', 'PIT', 'CHC']
+excluded_teams = []
 favored_teams = []
 
 """NBA-specific Genetic Settings"""
@@ -168,7 +168,73 @@ long_to_short_names = {
     'Arizona': 'ARI',
     'San Diego': 'SDP'
 }
- 
+
+bb_ref_teams = {
+    'BAL': 'BAL',
+    'BOS': 'BOS',
+    'TOR': 'TOR',
+    'NYY': 'NYY',
+    'TBR': 'TBR',
+    'CLE': 'CLE',
+    'DET': 'DET',
+    'KCR': 'KC',
+    'CWS': 'CHW',
+    'MIN': 'MIN',
+    'TEX': 'TEX',
+    'SEA': 'SEA',
+    'HOU': 'HOU',
+    'LAA': 'LAA',
+    'OAK': 'OAK',
+    'WAS': 'WSN',
+    'NYM': 'NYM',
+    'MIA': 'MIA',
+    'PHI': 'PHI',
+    'ATL': 'ATL',
+    'CHC': 'CHC',
+    'PIT': 'PIT',
+    'STL': 'STL',
+    'MIL': 'MIL',
+    'CIN': 'CIN',
+    'SFG': 'SFG',
+    'LAD': 'LAD',
+    'COL': 'COL',
+    'ARI': 'ARI',
+    'SDP': 'SDP'
+}
+
+rotochamp_teams = {
+    'ARI': 'ARI',
+    'ATL': 'ATL',
+    'BAL': 'BAL',
+    'BOS': 'BOS',
+    'CHC': 'CHC',
+    'CIN': 'CIN',
+    'CLE': 'CLE',
+    'COL': 'COL',
+    'CWS': 'CWS',
+    'DET': 'DET',
+    'HOU': 'HOU',
+    'KCR': 'KAN',
+    'LAA': 'LAA',
+    'LAD': 'LAD',
+    'MIA': 'MIA',
+    'MIL': 'MIL',
+    'MIN': 'MIN',
+    'NYM': 'NYM',
+    'NYY': 'NYY',
+    'OAK': 'OAK',
+    'PHI': 'PHI',
+    'PIT': 'PIT',
+    'SDP': 'SD',
+    'SEA': 'SEA',
+    'SFG': 'SF',
+    'STL': 'STL',
+    'TBR': 'TB',
+    'TEX': 'TEX',
+    'TOR': 'TOR',
+    'WAS': 'WAS'
+}
+
 team_list = [
     'BAL', 'BOS', 'TOR', 'NYY', 'TBR', 'CLE', 'DET', 'KCR', 'CWS', 'MIN',
     'TEX', 'SEA', 'HOU', 'LAA', 'OAK', 'WAS', 'NYM', 'MIA', 'PHI', 'ATL',
@@ -231,4 +297,15 @@ league_totals = {
         'HBP': 0.008671,
         'OUT': 0.484253
     }
+}
+
+known_player_conversions = {
+    'Michael Bolsinger': 'Mike Bolsinger',
+    'Hyun-Soo Kim': 'Hyun Soo Kim',
+    'Robert Refsnyder': 'Bob Refsnyder',
+    'Timothy Anderson': 'Tim Anderson',
+    'Norichika Aoki': 'Nori Aoki',
+    'Jung-Ho Kang': 'Jung Ho Kang',
+    'Matt Joyce': 'Matthew Joyce',
+    'Melvin Upton Jr.': 'Melvin Upton'
 }

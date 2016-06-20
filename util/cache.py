@@ -32,8 +32,8 @@ def cache_disk(cache_folder=conf.cache_path, cache_comment=None):
             # verify that the cached object exists and is less than $seconds
             # old
             if os.path.exists(filepath):
+                print '[cache] loading cached result: %s' % os.path.abspath(filepath)
                 result = pickle.load(open(filepath, "rb"))
-                print '[cache] loaded cached result: %s' % os.path.abspath(filepath)
 
             # call the decorated function...
             else:

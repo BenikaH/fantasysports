@@ -3,6 +3,7 @@ from team import Team
 from game_state import GameState
 from numpy import random as r
 import conf
+import pdb
 
 
 def run_simulation(away_team_name, home_team_name, starting_inn=1):
@@ -13,6 +14,7 @@ def run_simulation(away_team_name, home_team_name, starting_inn=1):
     # play the game
     while gs.game_on():
         # play innings
+
         if gs.get_stage() == 'top':
             batter = away_team.get_player(gs.batting_pos[0])
             pitcher = home_team.get_pitcher()
@@ -22,7 +24,7 @@ def run_simulation(away_team_name, home_team_name, starting_inn=1):
             pitcher = away_team.get_pitcher()
             outcome = play_batter(gs, batter, pitcher)
         gs.update_game(outcome, batter, pitcher)
-    return gs.get_game_stats()
+    return gs.get_game_stats(away_team, home_team)
 
 
 def play_batter(gs, batter, pitcher):
@@ -43,24 +45,27 @@ def calculate_hitting_outcome(gs, batter, pitcher):
         bat_hand == 'RIGHT'
     pit_probs = pitcher.get_handed_pitching_probs(bat_hand)
     bat_probs = batter.get_handed_batting_probs(pit_hand)
-    outcome_den = (
-        ((bat_probs['1B'] * pit_probs['1B']) /
-            conf.league_totals['PROBS']['1B']) +
-        ((bat_probs['2B'] * pit_probs['2B']) /
-            conf.league_totals['PROBS']['2B']) +
-        ((bat_probs['3B'] * pit_probs['3B']) /
-            conf.league_totals['PROBS']['3B']) +
-        ((bat_probs['HR'] * pit_probs['HR']) /
-            conf.league_totals['PROBS']['HR']) +
-        ((bat_probs['BB'] * pit_probs['BB']) /
-            conf.league_totals['PROBS']['BB']) +
-        ((bat_probs['HBP'] * pit_probs['HBP']) /
-            conf.league_totals['PROBS']['HBP']) +
-        ((bat_probs['SO'] * pit_probs['SO']) /
-            conf.league_totals['PROBS']['SO']) +
-        ((bat_probs['OUT'] * pit_probs['OUT']) /
-            conf.league_totals['PROBS']['OUT'])
-    )
+    try:
+        outcome_den = (
+            ((bat_probs['1B'] * pit_probs['1B']) /
+                conf.league_totals['PROBS']['1B']) +
+            ((bat_probs['2B'] * pit_probs['2B']) /
+                conf.league_totals['PROBS']['2B']) +
+            ((bat_probs['3B'] * pit_probs['3B']) /
+                conf.league_totals['PROBS']['3B']) +
+            ((bat_probs['HR'] * pit_probs['HR']) /
+                conf.league_totals['PROBS']['HR']) +
+            ((bat_probs['BB'] * pit_probs['BB']) /
+                conf.league_totals['PROBS']['BB']) +
+            ((bat_probs['HBP'] * pit_probs['HBP']) /
+                conf.league_totals['PROBS']['HBP']) +
+            ((bat_probs['SO'] * pit_probs['SO']) /
+                conf.league_totals['PROBS']['SO']) +
+            ((bat_probs['OUT'] * pit_probs['OUT']) /
+                conf.league_totals['PROBS']['OUT'])
+        )
+    except:
+        pdb.set_trace()
     ran = r.rand()
     out_prob = ((bat_probs['OUT'] * pit_probs['OUT']) /
                 conf.league_totals['PROBS']['OUT']) / outcome_den

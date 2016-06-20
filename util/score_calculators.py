@@ -31,7 +31,7 @@ def calculate_fanduel_hitter_score(sing, doub, trip, walk, hbp, hr, runs,
 
 def calculate_fanduel_pitcher_score(er, ip, so, win):
     """Return fanduel pitcher score based on stats."""
-    return (-3.0 * er) + (6.0 * ip) + (9.0 * so) + (12.0 * win)
+    return (-3.0 * er) + (3.0 * ip) + (3.0 * so) + (12.0 * win)
 
 # Draftkings SCORING
 """
