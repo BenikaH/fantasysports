@@ -65,3 +65,8 @@ def calculate_draftkings_hitter_score(sing, doub, trip, walk, hbp, hr, runs,
     return ((3.0 * sing) + (5.0 * doub) + (8.0 * trip) + (2.0 * walk) +
             (2.0 * hbp) + (10.0 * hr) + (2.0 * runs) + (2.0 * rbi) +
             (5.0 * sb))
+
+
+def calculate_draftkings_pitcher_score(er, ip, so, win, bb, hbp, cg=0, cgso=0, nh=0):
+    return ((-2.0 * er) + (2.25 * ip) + (2.0 * so) + (4.0 * win) + (-.6 * bb) +
+            (-.6 * hbp) + (cg * 2.5) + (cgso * 2.5) + (nh * 5.0))

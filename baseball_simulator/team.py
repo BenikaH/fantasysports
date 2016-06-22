@@ -15,13 +15,16 @@ class Team(object):
     def __init__(self, team_name):
         """Initialization function."""
         self.name = util.standardize_team_name(team_name)
-        self.batting_order, pit_rot = self._retrieve_projected_batting_order(
+        self.batting_order, pitcher_name = self._retrieve_projected_batting_order(
             team_name)
         self.roster = self._load_team_roster(team_name)
-        if pit_rot[0] in self.roster:
-            self.pitcher = self.roster[pit_rot[0]]
+        if pitcher_name in self.roster:
+            self.pitcher = self.roster[pitcher_name]
+            self.starting_pitcher = self.pitcher
         else:
-            self.pitcher = Pitcher(pit_rot[0])
+            self.pitcher = Pitcher(pitcher_name)
+            self.roster[pitcher_name] = self.pitcher
+            self.starting_pitcher = self.pitcher
         self.bullpen = brs.load_team_bullpen(team_name)
         for idx, player_name in enumerate(self.batting_order):
             if player_name in self.roster:
@@ -42,6 +45,13 @@ class Team(object):
                 roster[p_name] = Player(str(p_name))
         return roster
 
+    def start_new_game(self):
+        for player in self.roster:
+            self.roster[player].start_new_game()
+
+    def get_starting_pitcher(self):
+        return self.starting_pitcher
+
     def get_name(self):
         return self.name
 
@@ -51,6 +61,9 @@ class Team(object):
     def get_player(self, batting_pos):
         return self.batting_order[batting_pos]
 
+    def get_batting_order(self):
+        return self.batting_order
+
     def get_named_batters(self):
         arr = []
         for player in self.batting_order:
@@ -58,15 +71,21 @@ class Team(object):
         return arr
 
     def _retrieve_projected_batting_order(self, name):
-        batting_orders = retrieve_mlb_batting_order()
+        if conf.batting_orders is None:
+            conf.batting_orders, conf.pitchers = retrieve_mlb_batting_order()
         team_batting_order = None
-        team_pitching_rotation = brs.retrieve_pitching_rotation(
-            name)
         try:
-            team_batting_order = batting_orders[
+            conf.batting_orders[
                 util.standardize_team_name(name)]
+            return\
+                conf.batting_orders[
+                    util.standardize_team_name(name)][:],\
+                conf.pitchers[
+                    util.standardize_team_name(name)]
         except:
             team_batting_order = retrieve_most_recent_batting_order(name)
+            team_pitching_rotation = brs.retrieve_pitching_rotation(
+                name)
             if len(team_batting_order) < 9:
                 team_batting_order.append(team_pitching_rotation[0])
-        return team_batting_order, team_pitching_rotation
+            return team_batting_order, team_pitching_rotation[0]

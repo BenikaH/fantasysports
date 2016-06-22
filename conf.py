@@ -66,17 +66,19 @@ population_size = 10000
 
 """MLB-specific Genetic Settings"""
 self_defeating_weight = 3.0
-same_team_bonus_weight = 0.0
+same_team_bonus_weight = 2.0
 favored_team_bonus = 2.0
 use_stack_bonus = False
 stack_bonus = 7.0
 use_batting_orders = True
+batting_orders = None
+pitchers = None
 min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
-use_inclusion = True
+use_inclusion = False
 included_teams = ['LAA', 'OAK', 'MIL', 'LAD', 'WAS', 'SDP', 'PIT', 'CHC']
-excluded_teams = []
+excluded_teams = ['ARI', 'PHI']
 favored_teams = []
 
 """NBA-specific Genetic Settings"""

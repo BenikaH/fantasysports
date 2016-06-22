@@ -54,6 +54,7 @@ def retrieve_rotogrinder_nba_projections():
 
 def retrieve_mlb_batting_order():
     batting_orders = {}
+    pitchers = {}
     http = urllib3.PoolManager()
     r = http.urlopen('GET', 'https://rotogrinders.com/lineups/mlb?site=fanduel', preload_content=False)
     soup = BeautifulSoup(r.data, 'html5lib')
@@ -65,21 +66,29 @@ def retrieve_mlb_batting_order():
             away_team = team_names[0].find(class_='shrt').get_text()
         except:
             continue
-        away_players = card.find('div', class_='away-team').find('ul', class_='players').find_all('li', class_='player')
+        away_players = card.find('div', class_='away-team').find(
+            'ul', class_='players').find_all('li', class_='player')
         away_order = []
         for player in away_players:
             try:
-                away_order.append(player.find('a').get_text())
+                away_order.append(str(player.find('a').get_text()))
             except:
                 continue
+        pitchers[standardize_team_name(away_team)] = str(card.find(
+            'div', class_='away-team').find(
+            'div', class_='pitcher').find('a').get_text())
         batting_orders[standardize_team_name(away_team)] = away_order
         home_team = team_names[1].find(class_='shrt').get_text()
         try:
-            home_players = card.find('div', class_='home-team').find('ul', class_='players').find_all('li', class_='player')
+            home_players = card.find('div', class_='home-team').find(
+                'ul', class_='players').find_all('li', class_='player')
             home_order = []
             for player in home_players:
-                home_order.append(player.find('a').get_text())
+                home_order.append(str(player.find('a').get_text()))
         except:
             continue
+        pitchers[standardize_team_name(home_team)] = str(card.find(
+            'div', class_='home-team').find(
+            'div', class_='pitcher').find('a').get_text())
         batting_orders[standardize_team_name(home_team)] = home_order
-    return batting_orders
+    return batting_orders, pitchers

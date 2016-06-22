@@ -35,8 +35,10 @@ class Player(object):
             '2B': 0,
             '3B': 0,
             'HR': 0,
-            'RBI': 0
+            'RBI': 0,
+            'SB': 0
         }
+        self.game_history = []
 
     def get_handed_batting_probs(self, opp_handedness):
         """Return probabilities of batting outcomes."""
@@ -44,6 +46,22 @@ class Player(object):
             return self.handedness_batting_stats['RHP']
         else:
             return self.handedness_batting_stats['LHP']
+
+    def start_new_game(self):
+        self.game_history.append(self.bat_stats)
+        self.bat_stats = {
+            'SO': 0,
+            'BB': 0,
+            'HBP': 0,
+            'H': 0,
+            'R': 0,
+            '1B': 0,
+            '2B': 0,
+            '3B': 0,
+            'HR': 0,
+            'RBI': 0,
+            'SB': 0
+        }
 
     def _load_handedness_batting_stats(self):
         return brs.load_handed_probabilities(self.name, pit_or_bat='b')

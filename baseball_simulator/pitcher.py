@@ -3,6 +3,7 @@ import scrapers.baseball_ref_scraper as brs
 from player import Player
 import util.data_loader as dl
 import conf
+import pdb
 
 
 class Pitcher(Player):
@@ -44,6 +45,7 @@ class Pitcher(Player):
         try:
             handedness = conf.pitcher_handedness.at[str(self.name), 'Throws']
         except:
+            pdb.set_trace()
             raise ValueError('Pitcher %s handedness not included in doc.' %
                              self.name)
             # pdb.set_trace()

@@ -6,10 +6,20 @@ import conf
 import pdb
 
 
-def run_simulation(away_team_name, home_team_name, starting_inn=1):
-    """Run a simulation between two teams."""
+def run_simulated_games(away_team_name, home_team_name, game_count=10):
     away_team = Team(away_team_name)
     home_team = Team(home_team_name)
+    game_no = 0
+    while game_no < game_count:
+        away_team.start_new_game()
+        home_team.start_new_game()
+        game_log, score, pit_stats, bat_stats = play_game(away_team, home_team)
+        print score
+        game_no += 1
+
+
+def play_game(away_team, home_team, starting_inn=1):
+    """Run a simulation between two teams."""
     gs = GameState(starting_inn)
     # play the game
     while gs.game_on():

@@ -179,6 +179,7 @@ def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'
                          (conf.player_id_map[player_name], year, pit_or_bat),
                          preload_content=False)
     else:
+        pdb.set_trace()
         raise ValueError("Player %s not found in Baseball Reference." % player_name)
     soup = BeautifulSoup(r.data, 'html5lib')
     if soup.find(id='plato'):
