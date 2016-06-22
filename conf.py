@@ -10,9 +10,6 @@ batter_handedness_path = './data/batter_handedness.csv'
 pitcher_handedness_path = './data/pitcher_handedness.csv'
 field_factors_path = './data/field_factors.csv'
 
-"""Simulator Configuration"""
-pitcher_handedness = None
-batter_handedness = None
 
 # 'fanduel' or 'draftkings'
 site = 'draftkings'
@@ -27,6 +24,58 @@ rotogrinder_pitcher_path =\
 rotogrinder_nba_path =\
     'http://rotogrinders.com/projected-stats/nba-player.csv?site=%s' % site
 
+
+
+
+"""General Genetic Settings"""
+
+'''
+genetic_generations = 1000
+retain = .6
+random_select = .07
+mutate_chance = 0.06
+population_size = 150
+'''
+
+"""
+Original genetic settings:
+"""
+genetic_generations = 50
+retain = 0.35
+random_select = 0.05
+mutate_chance = 0.015
+population_size = 10000
+
+# how to sort the results: can be 'cost', 'points', 'cost-points',
+# 'cost-fitness', 'fitness'
+sort_by = 'cost-fitness'
+
+
+"""MLB-specific Genetic Settings"""
+self_defeating_weight = 3.0
+same_team_bonus_weight = 2.0
+favored_team_bonus = 2.0
+use_stack_bonus = False
+stack_bonus = 7.0
+use_batting_orders = True
+min_different_teams = 3
+excluded_pitchers = []
+excluded_batters = []
+use_inclusion = False
+included_teams = []
+excluded_teams = []
+favored_teams = []
+
+"""NBA-specific Genetic Settings"""
+excluded_nba_players = []
+excluded_nba_teams = []
+
+##################################
+# NECESSARY TO RUN: DO NOT ALTER #
+##################################
+batting_orders = None
+pitchers = None
+
 """General Info"""
 nba_max_salary = 60000
 if site == 'fanduel':
@@ -40,52 +89,11 @@ elif site == 'draftkings':
 use_rotogrinder_scores = False
 player_id_map = None
 
-# determines how much negative weight to assign to
-# teams that play themselves
-"""General Genetic Settings"""
-genetic_generations = 1000
-retain = .6
-random_select = .07
-mutate_chance = 0.06
-population_size = 150
+"""Simulator Configuration"""
+pitcher_handedness = None
+batter_handedness = None
+field_factors = None
 
-# how to sort the results: can be 'cost', 'points', 'cost-points',
-# 'cost-fitness', 'fitness'
-sort_by = 'cost-fitness'
-
-"""
-Original settings:
-"""
-'''
-genetic_generations = 50
-retain = 0.35
-random_select = 0.05
-mutate_chance = 0.015
-population_size = 10000
-'''
-
-"""MLB-specific Genetic Settings"""
-self_defeating_weight = 3.0
-same_team_bonus_weight = 2.0
-favored_team_bonus = 2.0
-use_stack_bonus = False
-stack_bonus = 7.0
-use_batting_orders = True
-batting_orders = None
-pitchers = None
-min_different_teams = 3
-excluded_pitchers = []
-excluded_batters = []
-use_inclusion = False
-included_teams = ['LAA', 'OAK', 'MIL', 'LAD', 'WAS', 'SDP', 'PIT', 'CHC']
-excluded_teams = ['ARI', 'PHI']
-favored_teams = []
-
-"""NBA-specific Genetic Settings"""
-excluded_nba_players = []
-excluded_nba_teams = []
-
-'USED TO ENFORCE CONTINUITY'
 short_to_long_names = {
     'BAL': 'Baltimore',
     'BOS': 'Boston',
@@ -135,40 +143,71 @@ short_to_long_names = {
     'COL': 'Colorado',
     'ARI': 'Arizona',
     'SDP': 'San Diego',
-    'SD': 'San Diego'
+    'SD': 'San Diego',
+    'SDN': 'San Diego'
 }
 
 long_to_short_names = {
     'Baltimore': 'BAL',
+    'Orioles': 'BAL',
     'Boston': 'BOS',
+    'Red Sox': 'BOS',
     'Toronto': 'TOR',
+    'Blue Jays': 'TOR',
     'NY Yankees': 'NYY',
+    'Yankees': 'NYY',
     'Tampa Bay': 'TBR',
+    'Rays': 'TBR',
     'Cleveland': 'CLE',
+    'Indians': 'CLE',
     'Detroit': 'DET',
+    'Tigers': 'DET',
     'Kansas City': 'KCR',
+    'Royals': 'KCR',
     'Chi White Sox': 'CWS',
+    'White Sox': 'CWS',
     'Minnesota': 'MIN',
+    'Twins': 'MIN',
     'Texas': 'TEX',
+    'Rangers': 'TEX',
     'Seattle': 'SEA',
+    'Mariners': 'SEA',
     'Houston': 'HOU',
+    'Astros': 'HOU',
     'LA Angels': 'LAA',
+    'Angels': 'LAA',
     'Oakland': 'OAK',
+    'Athletics': 'OAK',
     'Washington': 'WAS',
+    'Nationals': 'WAS',
     'NY Mets': 'NYM',
+    'Mets': 'NYM',
     'Miami': 'MIA',
+    'Marlins': 'MIA',
     'Philadelphia': 'PHI',
+    'Phillies': 'PHI',
     'Atlanta': 'ATL',
+    'Braves': 'ATL',
     'Chi Cubs': 'CHC',
+    'Cubs': 'CHC',
     'Pittsburgh': 'PIT',
+    'Pirates': 'PIT',
     'St. Louis': 'STL',
+    'Cardinals': 'STL',
     'Milwaukee': 'MIL',
+    'Brewers': 'MIL',
     'Cincinnatti': 'CIN',
+    'Reds': 'CIN',
     'San Francisco': 'SFG',
+    'Giants': 'SFG',
     'LA Dodgers': 'LAD',
+    'Dodgers': 'LAD',
     'Colorado': 'COL',
+    'Rockies': 'COL',
     'Arizona': 'ARI',
-    'San Diego': 'SDP'
+    'Diamondbacks': 'ARI',
+    'San Diego': 'SDP',
+    'Padres': 'SDP'
 }
 
 bb_ref_teams = {

@@ -15,12 +15,14 @@ def run_simulated_games(away_team_name, home_team_name, game_count=10):
         home_team.start_new_game()
         game_log, score, pit_stats, bat_stats = play_game(away_team, home_team)
         print score
+        print pit_stats
+        print bat_stats
         game_no += 1
 
 
 def play_game(away_team, home_team, starting_inn=1):
     """Run a simulation between two teams."""
-    gs = GameState(starting_inn)
+    gs = GameState(away_team, home_team, starting_inn)
     # play the game
     while gs.game_on():
         # play innings
@@ -34,7 +36,7 @@ def play_game(away_team, home_team, starting_inn=1):
             pitcher = away_team.get_pitcher()
             outcome = play_batter(gs, batter, pitcher)
         gs.update_game(outcome, batter, pitcher)
-    return gs.get_game_stats(away_team, home_team)
+    return gs.get_game_stats()
 
 
 def play_batter(gs, batter, pitcher):

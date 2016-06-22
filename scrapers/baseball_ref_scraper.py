@@ -44,7 +44,8 @@ def get_player_handedness(player_name):
         conf.player_id_map = retrieve_player_id_map()
     http = urllib3.PoolManager()
     r = http.urlopen(
-            'GET', 'http://www.baseball-reference.com/players/%s/%s.shtml' %
+            'GET',
+            'http://www.baseball-reference.com/players/%s/%s.shtml' %
             (conf.player_id_map[player_name][0], conf.player_id_map[player_name]),
             preload_content=False
     )

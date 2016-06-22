@@ -1,13 +1,18 @@
 import util.score_calculators as sc
 import pandas as pd
+import util.data_loader as dl
+import math
+import conf
 import pdb
 
 
 class GameState(object):
     """Class to manage entire state of the game."""
 
-    def __init__(self, inning=1):
+    def __init__(self, away_team, home_team, inning=1):
         """Initialize game state."""
+        if conf.field_factors is None:
+            conf.field_factors = dl.load_field_factors()
         self.inning = inning
         self.inn_stage = 'top'
         self.outs = 0
@@ -16,6 +21,8 @@ class GameState(object):
         self.bases = [0, 0, 0]
         self.game_log = []
         self.winning_pitcher = None
+        self.home_team = home_team
+        self.away_team = away_team
 
     def game_on(self):
         """Return whether the game is ongoing."""
@@ -25,21 +32,21 @@ class GameState(object):
         else:
             return False
 
-    def get_game_stats(self, away_team, home_team):
-        away_pit_name, away_pit = self._get_pitcher_stats(away_team.get_pitcher())
-        home_pit_name, home_pit = self._get_pitcher_stats(home_team.get_pitcher())
+    def get_game_stats(self):
+        away_pit_name, away_pit = self._get_pitcher_stats(self.away_team.get_pitcher())
+        home_pit_name, home_pit = self._get_pitcher_stats(self.home_team.get_pitcher())
         pitcher_stats = pd.DataFrame(
-            [[away_team.get_name()] + away_pit, [home_team.get_name()] + home_pit],
+            [[self.away_team.get_name()] + away_pit, [self.home_team.get_name()] + home_pit],
             columns=['Team', 'SO', 'BB', 'HA', 'ER', 'HBP', 'FDP', 'DKP'],
             index=[away_pit_name, home_pit_name]
         )
         # for subbed out players, may need to use diff arg than batting order
         away_names, away_batter_stats = self._output_team_batting_stats(
-            away_team.get_batting_order())
+            self.away_team.get_batting_order())
         home_names, home_batter_stats = self._output_team_batting_stats(
-            home_team.get_batting_order())
-        away_batter_stats = [[away_team.get_name()] + el for el in away_batter_stats]
-        home_batter_stats = [[home_team.get_name()] + el for el in home_batter_stats]
+            self.home_team.get_batting_order())
+        away_batter_stats = [[self.away_team.get_name()] + el for el in away_batter_stats]
+        home_batter_stats = [[self.home_team.get_name()] + el for el in home_batter_stats]
         batter_stats = pd.DataFrame(
             away_batter_stats + home_batter_stats,
             columns=['Team', 'H', '1B', '2B', '3B', 'HR', 'R', 'RBI',
@@ -58,6 +65,11 @@ class GameState(object):
 
     def _get_pitcher_stats(self, pitcher):
         pit_stats = pitcher.get_pitch_stats()
+        win = None
+        if self.winning_pitcher == pitcher.get_name():
+            win = 1
+        else:
+            win = 0
         return\
             pitcher.get_name(),\
             [
@@ -70,12 +82,12 @@ class GameState(object):
                     pit_stats['ER'],
                     9,
                     pit_stats['SO'],
-                    0),
+                    win),
                 sc.calculate_draftkings_pitcher_score(
                     pit_stats['ER'],
                     9,
                     pit_stats['SO'],
-                    0,
+                    win,
                     pit_stats['BB'],
                     pit_stats['HBP'])
             ]
@@ -261,6 +273,12 @@ class GameState(object):
             self.score[0] += 1
         else:
             self.score[1] += 1
+        # calculate winning pitcher
+        if math.fabs(self.score[0] - self.score[1]) == 1:
+            if self.score[0] > self.score[1]:
+                self.winning_pitcher = self.away_team.get_pitcher().get_name()
+            else:
+                self.winning_pitcher = self.home_team.get_pitcher().get_name()
         self.game_log.append("%s.%d:%s scores." % (
             self.inn_stage, self.inning,
             scoring_runner.get_name()))

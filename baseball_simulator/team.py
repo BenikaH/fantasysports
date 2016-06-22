@@ -48,6 +48,10 @@ class Team(object):
     def start_new_game(self):
         for player in self.roster:
             self.roster[player].start_new_game()
+        if self.pitcher == self.starting_pitcher:
+            self.starting_pitcher.start_new_game()
+        else:
+            self.pitcher.start_new_game()
 
     def get_starting_pitcher(self):
         return self.starting_pitcher

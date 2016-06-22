@@ -34,6 +34,16 @@ class Pitcher(Player):
         else:
             return self.handedness_pitching_stats['LHB']
 
+    def start_new_game(self):
+        super(Pitcher, self).start_new_game()
+        self.pitch_stats = {
+            'SO': 0,
+            'BB': 0,
+            'HBP': 0,
+            'HA': 0,
+            'ER': 0
+        }
+
     def _load_handedness_pitching_stats(self):
         return brs.load_handed_probabilities(
             self.name, pit_or_bat='p')
