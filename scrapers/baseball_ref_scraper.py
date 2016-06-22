@@ -18,7 +18,7 @@ import re
 def retrieve_player_id_map():
     """Retrieve and cache the links to each player's page."""
     http = urllib3.PoolManager()
-    player_link_map = {}
+    player_id_map = {}
     for char in ascii_lowercase:
         r = http.urlopen(
             'GET', 'http://www.baseball-reference.com/players/%s/' % char,
@@ -34,10 +34,29 @@ def retrieve_player_id_map():
                         link = link.replace('.shtml', '')
                     except:
                         pdb.set_trace()
-                    player_link_map[b.a.get_text()] = link
-    return player_link_map
+                    player_id_map[b.a.get_text()] = link
+    player_id_map['Tyrell Jenkins'] = 'jenkin001tyr'
+    return player_id_map
 
-# ALL TODO FROM HERE ON
+
+def get_player_handedness(player_name):
+    if conf.player_id_map is None:
+        conf.player_id_map = retrieve_player_id_map()
+    http = urllib3.PoolManager()
+    r = http.urlopen(
+            'GET', 'http://www.baseball-reference.com/players/%s/%s.shtml' %
+            (conf.player_id_map[player_name][0], conf.player_id_map[player_name]),
+            preload_content=False
+    )
+    soup = BeautifulSoup(r.data, 'html5lib')
+    try:
+        txt = soup.find('tr').get_text()
+        bats = re.search(r'Bats:\s([a-zA-Z]*),', txt).group(1).upper()
+        throws = re.search(r'Throws:\s([a-zA-Z]*)\n', txt).group(1).upper()
+    except:
+        bats = 'RIGHT'
+        throws = 'RIGHT'
+    return bats, throws
 
 
 @cache_disk()

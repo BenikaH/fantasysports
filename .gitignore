@@ -4,3 +4,4 @@ chromedriver
 venv/*
 cache/*
 .DS_Store
+data/missing*.csv

@@ -15,6 +15,7 @@ class GameState(object):
         self.batting_pos = [0, 0]
         self.bases = [0, 0, 0]
         self.game_log = []
+        self.winning_pitcher = None
 
     def game_on(self):
         """Return whether the game is ongoing."""
