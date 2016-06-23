@@ -9,6 +9,17 @@ schedule_path = './data/schedule2016.txt'
 batter_handedness_path = './data/batter_handedness.csv'
 pitcher_handedness_path = './data/pitcher_handedness.csv'
 field_factors_path = './data/field_factors.csv'
+projection_output_dir = './projections/'
+
+"""Projection Generation Settings"""
+projection_date = 'June 23, 2016'
+# number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
+simulated_game_count = 2000
+# genetic algorithm settings for simple gen
+# approach: can be 'points' or 'profitability'
+genetic_approach = 'profitability'
+profitable_cutoff = 220
+
 
 
 # 'fanduel' or 'draftkings'
@@ -346,5 +357,6 @@ known_player_conversions = {
     'Jung-Ho Kang': 'Jung Ho Kang',
     'Matt Joyce': 'Matthew Joyce',
     'Melvin Upton Jr.': 'Melvin Upton',
-    'Matthew Reynolds': 'Matt Reynolds'
+    'Matthew Reynolds': 'Matt Reynolds',
+    'Dae-Ho Lee': 'Dae-ho Lee'
 }
