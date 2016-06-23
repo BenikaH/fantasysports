@@ -426,11 +426,17 @@ def load_team_bullpen(team_name):
         preload_content=False)
     soup = BeautifulSoup(r.data, 'html5lib')
     order = soup.find(id='MainContent_gridBullpen').find_all('tr')
+    names = []
     for row in order:
         if len(row.find_all('th')) > 0:
             cols = row.find_all('th')
             col_headers = [ele.text.strip() for ele in cols]
+            col_headers = [col_headers[0]] + col_headers[2:]
         else:
             cols = row.find_all('td')
-            bullpen.append([ele.text.strip() for ele in cols])
-    return pd.DataFrame(bullpen, columns=col_headers)
+            entry = [ele.text.strip() for ele in cols]
+            names.append(entry[1])
+            bullpen.append([entry[0]] + entry[2:])
+    return pd.DataFrame(bullpen,
+                        columns=col_headers,
+                        index=names)

@@ -17,13 +17,7 @@ class Pitcher(Player):
             self.handedness_pitching_stats = {}
             self.handedness_pitching_stats['RHB'] = conf.league_totals['PROBS']
             self.handedness_pitching_stats['LHB'] = conf.league_totals['PROBS']
-        self.pitch_stats = {
-            'SO': 0,
-            'BB': 0,
-            'HBP': 0,
-            'HA': 0,
-            'ER': 0
-        }
+        self._initialize_pitch_stats()
 
     def get_pitch_stats(self):
         return self.pitch_stats
@@ -36,12 +30,16 @@ class Pitcher(Player):
 
     def start_new_game(self):
         super(Pitcher, self).start_new_game()
+        self._initialize_pitch_stats()
+
+    def _initialize_pitch_stats(self):
         self.pitch_stats = {
             'SO': 0,
             'BB': 0,
             'HBP': 0,
             'HA': 0,
-            'ER': 0
+            'ER': 0,
+            'IP': 0
         }
 
     def _load_handedness_pitching_stats(self):

@@ -13,6 +13,7 @@ class GameState(object):
         """Initialize game state."""
         if conf.field_factors is None:
             conf.field_factors = dl.load_field_factors()
+        self.field_adjustments = conf.field_factors
         self.inning = inning
         self.inn_stage = 'top'
         self.outs = 0
@@ -80,12 +81,12 @@ class GameState(object):
                 pit_stats['HBP'],
                 sc.calculate_fanduel_pitcher_score(
                     pit_stats['ER'],
-                    9,
+                    6,
                     pit_stats['SO'],
                     win),
                 sc.calculate_draftkings_pitcher_score(
                     pit_stats['ER'],
-                    9,
+                    6,
                     pit_stats['SO'],
                     win,
                     pit_stats['BB'],
@@ -285,16 +286,25 @@ class GameState(object):
         scoring_runner.add_run()
         pitcher.add_pitch_er()
 
+    # TODO
+    def add_stolen_base(self):
+        return None
+
     def get_stage(self):
         return self.inn_stage
 
     def update_inning(self):
+
         if self.inn_stage == 'bot':
             self.game_log.append('End of inning %s.' % self.inning)
             self.inn_stage = 'top'
             self.inning += 1
+            if self.inning == 7:
+                self.home_team.replace_pitcher()
         else:
             self.inn_stage = 'bot'
+            if self.inning == 7:
+                self.away_team.replace_pitcher()
         self.outs = 0
         self.bases = [0, 0, 0]
 

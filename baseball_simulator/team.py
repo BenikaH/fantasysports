@@ -12,7 +12,7 @@ import conf
 class Team(object):
     """Class definition for team object."""
 
-    def __init__(self, team_name):
+    def __init__(self, team_name, batting_order=None, pitcher=None):
         """Initialization function."""
         self.name = util.standardize_team_name(team_name)
         self.batting_order, pitcher_name = self._retrieve_projected_batting_order(
@@ -52,6 +52,8 @@ class Team(object):
             self.starting_pitcher.start_new_game()
         else:
             self.pitcher.start_new_game()
+            self.starting_pitcher.start_new_game()
+            self.pitcher = self.starting_pitcher
 
     def get_starting_pitcher(self):
         return self.starting_pitcher
@@ -73,6 +75,22 @@ class Team(object):
         for player in self.batting_order:
             arr.append(player.get_name())
         return arr
+
+    def replace_pitcher(self, desired_role='Relief'):
+        bp_dict = self.bullpen[['Role', 'IP']].to_dict()
+        pot_pitchers = []
+        for p in bp_dict['Role']:
+            if bp_dict['Role'][p] == desired_role:
+                pot_pitchers.append(p)
+        ip_count = []
+        for p in pot_pitchers:
+            ip_count.append(int(bp_dict['IP'][p]))
+        pit = pot_pitchers[ip_count.index(max(ip_count))]
+        if pit in self.roster:
+            self.pitcher = self.roster[pit]
+            if self.pitcher in self.batting_order:
+                bat_idx = self.batting_order.index(self.pitcher)
+                self.batting_order[bat_idx] = self.roster[pit]
 
     def _retrieve_projected_batting_order(self, name):
         if conf.batting_orders is None:

@@ -25,10 +25,7 @@ rotogrinder_nba_path =\
     'http://rotogrinders.com/projected-stats/nba-player.csv?site=%s' % site
 
 
-
-
 """General Genetic Settings"""
-
 '''
 genetic_generations = 1000
 retain = .6
@@ -343,10 +340,11 @@ league_totals = {
 known_player_conversions = {
     'Michael Bolsinger': 'Mike Bolsinger',
     'Hyun-Soo Kim': 'Hyun Soo Kim',
-    'Robert Refsnyder': 'Bob Refsnyder',
+    'Robert Refsnyder': 'Rob Refsnyder',
     'Timothy Anderson': 'Tim Anderson',
     'Norichika Aoki': 'Nori Aoki',
     'Jung-Ho Kang': 'Jung Ho Kang',
     'Matt Joyce': 'Matthew Joyce',
-    'Melvin Upton Jr.': 'Melvin Upton'
+    'Melvin Upton Jr.': 'Melvin Upton',
+    'Matthew Reynolds': 'Matt Reynolds'
 }
