@@ -22,7 +22,7 @@ def retrieve_rotogrinder_mlb_projections():
     batter_info = [entry[1:] for entry in data_formatted][1:]
     batter_info = [el[0:4] + [el[6]] for el in batter_info]
     batter_data_frame = pd.DataFrame(batter_info, index=names,
-        columns=['rg_cost', 'rg_team', 'rg_pos', 'rg_opp_team','rg_pred'])
+        columns=['rg_cost', 'rg_team', 'rg_pos', 'rg_opp_team', 'rg_pred'])
 
     """PITCHERS"""
     r = http.urlopen('GET', conf.rotogrinder_pitcher_path, preload_content=False)
@@ -35,6 +35,32 @@ def retrieve_rotogrinder_mlb_projections():
         columns=['rg_cost', 'rg_team', 'rg_pos', 'rg_opp_team', 'rg_pred'])
 
     return batter_data_frame, pitcher_data_frame
+
+
+def retrieve_mlb_player_salaries_and_positions():
+    http = urllib3.PoolManager()
+
+    # hitters
+    r = http.urlopen('GET', conf.rotogrinder_hitter_path, preload_content=False)
+    hitter_data = csv.reader(r)
+    data_formatted = [entry for entry in hitter_data]
+    names = [entry[0] for entry in data_formatted][1:]
+    batter_info = [entry[1:] for entry in data_formatted][1:]
+    player_info = [[float(el[0])] + el[1:4] for el in batter_info]
+
+    # pitchers
+    r = http.urlopen('GET', conf.rotogrinder_pitcher_path, preload_content=False)
+    pitcher_data = csv.reader(r)
+    data_formatted = [entry for entry in pitcher_data]
+    names += [entry[0] for entry in data_formatted][1:]
+    pitcher_info = [entry[1:] for entry in data_formatted][1:]
+    player_info += [[float(el[0])] + el[1:4] for el in pitcher_info]
+    player_data_frame = pd.DataFrame(
+        player_info,
+        index=names,
+        columns=['cost', 'team', 'pos', 'opp_team']
+    )
+    return player_data_frame
 
 
 def retrieve_rotogrinder_nba_projections():
@@ -92,3 +118,4 @@ def retrieve_mlb_batting_order():
             'div', class_='pitcher').find('a').get_text())
         batting_orders[standardize_team_name(home_team)] = home_order
     return batting_orders, pitchers
+

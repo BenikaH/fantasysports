@@ -4,6 +4,7 @@ import conf
 import pdb
 import random
 import numpy as np
+import hashlib
 from operator import add
 
 
@@ -12,35 +13,59 @@ class GeneticMLB(object):
     def __init__(cls, max_salary):
         cls.max_salary = max_salary
         cls.team = None
+        cls.computed_lineups = {}
 
     ###############
     # MAIN RUNNER #
     ###############
-    def calculate(self, players):
+    def calculate_random_sample(self, proj):
+        """Find best teams based on points in randomly_selected outputs."""
+        return None
+
+    def calculate(self, proj):
+        """Find best teams using fitness based on profitability percent."""
         best_teams = []
         history = []
+        players = proj.index
         pos_players = {
-            "P": [player for player in players if player['pos'] == 'P'],
-            "C": [player for player in players if player['pos'] == 'C'],
-            "OF": [player for player in players if player['pos'] == 'OF'],
-            "SS": [player for player in players if player['pos'] == 'SS'],
-            "1B": [player for player in players if player['pos'] == '1B'],
-            "2B": [player for player in players if player['pos'] == '2B'],
-            "3B": [player for player in players if player['pos'] == '3B']
+            "C": [proj.loc[player] for player in players if 'C' in proj.at[
+                player, 'pos']],
+            "OF": [proj.loc[player] for player in players if 'OF' in proj.at[
+                player, 'pos']],
+            "SS": [proj.loc[player] for player in players if 'SS' in proj.at[
+                player, 'pos']],
+            "1B": [proj.loc[player] for player in players if '1B' in proj.at[
+                player, 'pos']],
+            "2B": [proj.loc[player] for player in players if '2B' in proj.at[
+                player, 'pos']],
+            "3B": [proj.loc[player] for player in players if '3B' in proj.at[
+                player, 'pos']]
         }
+        if conf.site == 'fanduel':
+            pos_players["P"] = [proj.loc[player] for player in players if 'P'
+                                in proj.at[player, 'pos']]
+        else:
+            pos_players["P"] = [proj.loc[player] for player in players if 'SP'
+                                in proj.at[player, 'pos']]
+        print "\nGENETIC LINEUP OPTIMIZER\n"
         pop = self.create_population(conf.population_size, pos_players)
-        fitness_history = [self.grade(pop)]
+        # fitness_history = [self.grade(pop)]
         # 40 iterations of our evolution
         for i in xrange(conf.genetic_generations):
-            pop = self.evolve(pop, pos_players)
-            fitness_history.append(self.grade(pop))
-            valid_teams = [team for team in pop if self.get_team_salary(team) <= self.max_salary]
-            valid_teams = sorted(valid_teams, key=self.get_team_point_total, reverse=True)
-            if len(valid_teams) > 0:
-                best_teams.append(valid_teams[0])
-        for datum in fitness_history:
-            history.append(datum)
-
+            print "Computing generation %d of %d" % (i + 1, conf.genetic_generations)
+            graded = [(self.fitness(team), team) for team in pop]
+            graded = [x[1] for x in sorted(graded, key=lambda x: x[0], reverse=True)]
+            pop = self.evolve(graded, pos_players)
+            # fitness_history.append(self.grade(pop))
+            # valid_teams = [team for team in graded if not
+            #                self._violates_limits(team)]
+            # valid_teams = sorted(valid_teams, key=lambda x: x[0], reverse=True)
+            # if len(valid_teams) > 0:
+            #     best_teams.append(valid_teams[0][1])
+            #     best_teams.append(valid_teams[1][1])
+        # for datum in fitness_history:
+            # history.append(datum)
+        best_teams = pop
         real_best_teams = []
         for team in best_teams:
             if self._violates_limits(team):
@@ -48,11 +73,9 @@ class GeneticMLB(object):
             real_best_teams.append(team)
         if conf.sort_by == 'cost':
             real_best_teams = sorted(real_best_teams, key=lambda x: self.get_team_salary(x), reverse=True)
-        elif conf.sort_by == 'points':
-            real_best_teams = sorted(real_best_teams, key=lambda x: self.get_team_point_total(x), reverse=True)
         elif conf.sort_by == 'cost-points':
             real_best_teams = sorted(real_best_teams, key=lambda x: (
-                self.get_team_salary(x), self.get_team_point_total(x)),
+                self.get_team_salary(x), self._get_team_point_total(x)),
                 reverse=True)
         elif conf.sort_by == 'cost-fitness':
             real_best_teams = sorted(real_best_teams, key=lambda x: (self.get_team_salary(x), self.fitness(x)), reverse=True)
@@ -60,7 +83,7 @@ class GeneticMLB(object):
             real_best_teams = sorted(real_best_teams, key=lambda x: self.fitness(x), reverse=True)
         else:
             raise ValueError('please specify a sorting criteria of cost or points in conf.sort_by')
-        return real_best_teams[0:10]
+        return real_best_teams
 
     def set_max_salary(self, max_salary):
         self.max_salary = max_salary
@@ -83,13 +106,6 @@ class GeneticMLB(object):
             team['P'] = random.sample(pos_players['P'], 2)
         return team
 
-    def get_team_point_total(self, team):
-        total_points = 0
-        for pos, players in team.iteritems():
-            for player in players:
-                total_points += player["value"]
-        return total_points
-
     def get_team_salary(self, team):
         total_salary = 0
         for pos, players in team.iteritems():
@@ -110,15 +126,13 @@ class GeneticMLB(object):
         print team['OF'][1]
         print team['OF'][2]
 
-    def evolve(self, pop, sample, retain=conf.retain,
+    def evolve(self, pop_graded, sample, retain=conf.retain,
                random_select=conf.random_select, mutate_chance=conf.mutate_chance):
-        graded = [(self.fitness(team), team) for team in pop]
-        graded = [x[1] for x in sorted(graded, reverse=True)]
-        retain_length = int(len(graded) * retain)
-        parents = graded[:retain_length]
+        retain_length = int(len(pop_graded) * retain)
+        parents = pop_graded[:retain_length]
 
         # randomly add other individuals to promote genetic diversity
-        for individual in graded[retain_length:]:
+        for individual in pop_graded[retain_length:]:
             if random_select > random.random():
                 parents.append(individual)
 
@@ -129,7 +143,7 @@ class GeneticMLB(object):
 
         # crossover parents to create children
         parents_length = len(parents)
-        desired_length = len(pop) - parents_length
+        desired_length = len(pop_graded) - parents_length
         children = []
         while len(children) < desired_length:
             male = random.randint(0, parents_length - 1)
@@ -144,14 +158,32 @@ class GeneticMLB(object):
         return parents
 
     def fitness(self, team):
-        if self._violates_limits(team):
-            return 0
-        if self.genetic_approach == 'points':
-            return self.get_team_point_total(team)
-        elif self.genetic_approach == 'profitability':
-            return 5
+        primary_players = frozenset([player for players in [[x.name for x in team[key]] for key in team] for player in players])
+        key = hash(primary_players)
+        # hashlib.sha256(str(team)).hexdigest()
+        # cache precomputed results locally
+        if key in self.computed_lineups:
+            return self.computed_lineups[key]
         else:
-            raise ValueError('Please specify a genetic approach of points or profitability.')
+            if self._violates_limits(team):
+                return 0
+            prof_val = self._get_lineup_profitability_count(team)
+            self.computed_lineups[key] = prof_val
+            return prof_val
+
+    def _get_lineup_profitability_count(self, team):
+        count = 0
+        for i in range(conf.simulated_game_count):
+            if self._get_team_point_total(team, i) > conf.profitable_cutoff:
+                count += 1
+        return count
+
+    def _get_team_point_total(self, team, simulation_idx):
+        total_points = 0
+        for pos, players in team.iteritems():
+            for player in players:
+                total_points += player[simulation_idx]
+        return total_points
 
     ####################
     # LIMIT VIOLATIONS #
@@ -176,135 +208,20 @@ class GeneticMLB(object):
 
     def _has_duplicate_players(self, team):
         # gives us a set of all the names
-        primary_players = set([player for players in [[
-            x['name'] for x in team[key]] for key in team]
-            for player in players])
+        primary_players = frozenset(
+            [player for players in [[x.name for x in team[key]] for key in team] for player in players])
         if conf.site == 'fanduel' and len(primary_players) < 9:
             return True
         elif conf.site == 'draftkings' and len(primary_players) < 10:
             return True
 
-    ####################
-    # POINT DEDUCTIONS #
-    ####################
-    def _get_point_deductions(self, team):
-        return self._playing_against_self(team)
-
-    def _playing_against_self(self, team):
-        'Returns a negative weight for conflicting teams'
-        # gets a flattened set of the teams on our team
-        primary_teams = set([this_team for t in [[
-            x['team'] for x in team[item]] for item in team]
-            for this_team in t])
-        primary_opponents = set([that_team for t in [[
-            x['opp'] for x in team[item]] for item in team]
-            for that_team in t])
-        conflict_instances = len(primary_teams.intersection(primary_opponents))
-        return conflict_instances * conf.self_defeating_weight
-
-    #################
-    # POINT BONUSES #
-    #################
-    def _get_point_bonuses(self, team):
-        primary_teams = [t for teams in [[x['team'] for x in team[item]]
-                         for item in team] for t in teams]
-        primary_teams_set = set(primary_teams)
-        # reward teams that favor one team via fewer different teams
-        same_team_bonus = self._get_same_team_bonus(primary_teams_set)
-        favored_team_bonus = self._get_favored_team_bonus(primary_teams)
-        if conf.use_stack_bonus:
-            stack_bonus = self._get_stack_bonus(team, primary_teams)
-            return same_team_bonus + stack_bonus + favored_team_bonus
-        else:
-            return same_team_bonus + favored_team_bonus
-
-    def _get_same_team_bonus(self, team_set):
-        '''
-        Return the value of the "same team bonus."
-        team_set: a set of all the team's different teams
-        '''
-        return (9 - len(team_set)) * conf.same_team_bonus_weight
-
-    def _get_favored_team_bonus(self, team_list):
-        bonus = 0
-        for team in conf.favored_teams:
-            for list_team in team_list:
-                if team == list_team:
-                    bonus += conf.favored_team_bonus
-        return bonus
-
-    def _get_stack_bonus(self, team, teams_list):
-        '''Return the stack bonus.'''
-        # remove pitchers, as they don't count in a stack
-        teams_list.remove(team['P'][0]['team'])
-        if conf.site == 'draftkings':
-            teams_list.remove(team['P'][1]['team'])
-        # retrieve the count of all items in our teams list
-        stack_bonus = 0.0
-        team_counts = {}
-        for t in teams_list:
-            if t in team_counts:
-                team_counts[t] += 1
-            else:
-                team_counts[t] = 1
-        # if we're at 4 we have a stack, whether or not it's good
-        for t in team_counts:
-            if team_counts[t] == 4:
-                # if we're using batting orders, determine the strength of the stack
-                if conf.use_batting_orders:
-                    stack_bonus += self._get_stack_strength(
-                        t,
-                        self._get_stacked_players(t, team))
-                    # only grant the stack bonus once
-                else:
-                    stack_bonus += conf.stack_bonus
-                break
-        return stack_bonus
-
-    def _get_stack_strength(self, team_name, players):
-        """Return the strength of a stack based on how close players are in
-        the batting order."""
-        batting_order = conf.batting_orders[team_name]
-        p_pos = sorted([batting_order.index(player) for player in players])
-        # look for closest bunch (i.e: 0,5,6,8 -> 8, 5,6,8,9 -> 4)
-        # ideal distance is 3, as in 1,2,3,4 (4-3) + (3-2) + (2 - 1)
-        # option1 -> 0,5,6,8 -> 8 + 1 = 9
-        option_1 = (p_pos[3] - p_pos[2]) + (p_pos[2] - p_pos[1]) + (p_pos[1] - p_pos[0]) + 1
-        # option2 -> 9,5,6,8 -> 4 + 1 = 5
-        option_2 = (p_pos[3] - p_pos[2]) + (p_pos[2] - p_pos[1]) + ((p_pos[0] + 9) - p_pos[3]) + 1
-        # option2 -> 9,14,6,8 -> 8 + 1 = 9
-        option_3 = (p_pos[1] - p_pos[0]) + ((p_pos[0] + 9) - p_pos[3]) + (p_pos[3] - p_pos[2]) + 1
-        act_dist = np.min([option_1, option_2, option_3])
-        """
-        Here, we divide the stack bonus by the actual distance (plus 1) and
-        multiply by the ideal distance of 3 + 1 = 4.  We add one to narrow the
-        gap between different stacks.  This means that, for a stack bonus of
-        30, we would see the following distribution:
-
-        Dist.   Bonus Score
-         3         30
-         4         24
-         5         20
-         6         17.14
-
-        """
-        return (conf.stack_bonus / act_dist) * 4.0
-
-    def _get_stacked_players(self, t, team):
-        '''Return names of stacked players.'''
-        stacked_players = []
-        for pos in team:
-            for player in team[pos]:
-                if player['team'] == t:
-                    stacked_players.append(player['name'])
-        return stacked_players
-
     def grade(self, pop):
-        'Find average fitness for a population.'
+        """Find average fitness for a population."""
         summed = reduce(add, (self.fitness(team) for team in pop))
         return summed / float(len(pop))
 
     def list_to_team(self, players):
+        """Return teams as a list."""
         if conf.site == 'fanduel':
             return {
                 'P': [players[0]],

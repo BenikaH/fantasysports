@@ -9,23 +9,24 @@ import csv
 import pdb
 
 schedule = dl.load_mlb_schedule()
-proj_date = parse(conf.projection_date)
+if conf.projection_date == 'today':
+    proj_date = dt.datetime.now()
+else:
+    proj_date = parse(conf.projection_date)
 fmt_date = proj_date.strftime('%Y%m%d')
 current_time = dt.datetime.now().strftime('%H:%M')
 games = schedule.loc[fmt_date]
 
 fd_proj_file = open(
-    '%s/fanduel_%s_%s.csv' % (
-        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d'),
-        current_time), 'w')
+    '%sfanduel_%s.csv' % (
+        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d')), 'w')
 writer_fd = csv.DictWriter(fd_proj_file,
                            fieldnames=['name'] +
                            range(conf.simulated_game_count))
 writer_fd.writeheader()
 dk_proj_file = open(
-    '%s/draftkings_%s_%s.csv' % (
-        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d'),
-        current_time), 'w')
+    '%sdraftkings_%s.csv' % (
+        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d')), 'w')
 writer_dk = csv.DictWriter(dk_proj_file,
                            fieldnames=['name'] +
                            range(conf.simulated_game_count))

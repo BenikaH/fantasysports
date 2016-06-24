@@ -31,7 +31,7 @@ merged_pitcher_df = pitcher_df_rotogrinders.join(pitcher_df_sabersim)
 
 # Load Batting Orders
 if conf.use_batting_orders:
-    conf.batting_orders = retrieve_mlb_batting_order()
+    conf.batting_orders, conf.pitchers = retrieve_mlb_batting_order()
 
 if conf.site == 'fanduel':
     # Numberfire (only for fanduel)

@@ -12,18 +12,17 @@ field_factors_path = './data/field_factors.csv'
 projection_output_dir = './projections/'
 
 """Projection Generation Settings"""
-projection_date = 'June 23, 2016'
+projection_date = 'today'
 # number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
-simulated_game_count = 2000
+simulated_game_count = 100
 # genetic algorithm settings for simple gen
 # approach: can be 'points' or 'profitability'
 genetic_approach = 'profitability'
 profitable_cutoff = 220
 
 
-
 # 'fanduel' or 'draftkings'
-site = 'draftkings'
+site = 'fanduel'
 include_numberfire = False
 
 
@@ -37,22 +36,24 @@ rotogrinder_nba_path =\
 
 
 """General Genetic Settings"""
-'''
-genetic_generations = 1000
+
+genetic_generations = 5 # used to be 1000
 retain = .6
 random_select = .07
-mutate_chance = 0.06
+mutate_chance = 0.05
 population_size = 150
-'''
+
 
 """
 Original genetic settings:
+"""
 """
 genetic_generations = 50
 retain = 0.35
 random_select = 0.05
 mutate_chance = 0.015
-population_size = 10000
+population_size = 1000
+"""
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
@@ -358,5 +359,6 @@ known_player_conversions = {
     'Matt Joyce': 'Matthew Joyce',
     'Melvin Upton Jr.': 'Melvin Upton',
     'Matthew Reynolds': 'Matt Reynolds',
-    'Dae-Ho Lee': 'Dae-ho Lee'
+    'Dae-Ho Lee': 'Dae-ho Lee',
+    'Thomas Pham': 'Tommy Pham'
 }
