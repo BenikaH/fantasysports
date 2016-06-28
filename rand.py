@@ -10,3 +10,8 @@ from baseball_simulator.simulation_runner import run_simulated_games
 run_simulated_games('SFG', 'PIT')
 
 # cache id: 762225ac9efd5a98af338ede8cd583e0
+
+"""
+!import code; code.interact(local=vars())
+used for pdb
+"""

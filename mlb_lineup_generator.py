@@ -7,6 +7,7 @@ from util.util import is_number, print_top_df_lineups
 from lineup_optimizers.proj_genetic_mlb import GeneticMLB
 import pandas as pd
 import numpy as np
+import types
 import conf
 import pdb
 
@@ -23,7 +24,7 @@ fmt_date = proj_date.strftime('%Y_%m_%d')
 # df = pd.read_csv('./projections/%s_%s.csv' % (
 #     conf.site, '2016_06_23_00:08'),
 #     index_col=0)
-df = pd.read_csv('./projections/%s_%s.csv' % (conf.site, fmt_date), index_col=0)
+df = pd.read_csv('./projections/%s_%s_%d.csv' % (conf.site, fmt_date, conf.proj_iteration), index_col=0)
 
 # join our two data frames
 projections_overall = df.join(sals_and_pos, how='left')
@@ -33,7 +34,14 @@ to_drop = []
 for name in projections_overall.index:
     if not is_number(projections_overall.at[name, 'cost']):
         to_drop.append(name)
+    # elif name in conf.excluded_batters or name in conf.excluded_pitchers:
+    #     to_drop.append(name)
+    elif conf.use_inclusion is False and projections_overall.at[name, 'team'] in conf.excluded_teams:
+        to_drop.append(name)
+    elif conf.use_inclusion is True and projections_overall.at[name, 'team'] not in conf.included_teams:
+        to_drop.append(name)
 projections_overall = projections_overall.drop(to_drop)
+print projections_overall
 
 # calculate lineups
 gen = GeneticMLB(conf.mlb_max_salary)

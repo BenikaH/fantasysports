@@ -10,15 +10,18 @@ batter_handedness_path = './data/batter_handedness.csv'
 pitcher_handedness_path = './data/pitcher_handedness.csv'
 field_factors_path = './data/field_factors.csv'
 projection_output_dir = './projections/'
+models_path = './models/'
+retrosheet_path = './data/retrosheet/'
 
 """Projection Generation Settings"""
 projection_date = 'today'
 # number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
-simulated_game_count = 100
+simulated_game_count = 500
+proj_iteration = 1
 # genetic algorithm settings for simple gen
 # approach: can be 'points' or 'profitability'
 genetic_approach = 'profitability'
-profitable_cutoff = 220
+profitable_cutoff = 190
 
 
 # 'fanduel' or 'draftkings'
@@ -36,28 +39,27 @@ rotogrinder_nba_path =\
 
 
 """General Genetic Settings"""
-
-genetic_generations = 5 # used to be 1000
+"""
+genetic_generations = 80 # used to be 1000
 retain = .6
 random_select = .07
 mutate_chance = 0.05
-population_size = 150
+population_size = 200
+"""
 
 
 """
 Original genetic settings:
-"""
 """
 genetic_generations = 50
 retain = 0.35
 random_select = 0.05
 mutate_chance = 0.015
 population_size = 1000
-"""
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
-sort_by = 'cost-fitness'
+sort_by = 'fitness'
 
 
 """MLB-specific Genetic Settings"""
@@ -69,9 +71,9 @@ stack_bonus = 7.0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
-excluded_batters = []
-use_inclusion = False
-included_teams = []
+excluded_batters = ["Peter O'Brien", "Whit Merrifield", "Jett Bandy"]
+use_inclusion = True
+included_teams = ['MIN', 'NYY', 'TBR', 'BAL', 'TOR', 'CWS', 'CHC', 'MIA', 'CLE', 'DET', 'WAS', 'MIL', 'SDP', 'CIN', 'ARI', 'COL']
 excluded_teams = []
 favored_teams = []
 
@@ -349,6 +351,29 @@ league_totals = {
     }
 }
 
+below_avg_batting_probs = {
+    'LHP': {
+        'OUT': .50,
+        '1B': .105,
+        '2B': .03,
+        '3B': .004,
+        'HR': .01,
+        'BB': .05,
+        'SO': .25,
+        'HBP': .001
+    },
+    'RHP': {
+        'OUT': .50,
+        '1B': .105,
+        '2B': .03,
+        '3B': .004,
+        'HR': .01,
+        'BB': .05,
+        'SO': .25,
+        'HBP': .001
+    }
+}
+
 known_player_conversions = {
     'Michael Bolsinger': 'Mike Bolsinger',
     'Hyun-Soo Kim': 'Hyun Soo Kim',
@@ -360,5 +385,6 @@ known_player_conversions = {
     'Melvin Upton Jr.': 'Melvin Upton',
     'Matthew Reynolds': 'Matt Reynolds',
     'Dae-Ho Lee': 'Dae-ho Lee',
-    'Thomas Pham': 'Tommy Pham'
+    'Thomas Pham': 'Tommy Pham',
+    'Michael Fiers': 'Mike Fiers'
 }

@@ -18,15 +18,17 @@ current_time = dt.datetime.now().strftime('%H:%M')
 games = schedule.loc[fmt_date]
 
 fd_proj_file = open(
-    '%sfanduel_%s.csv' % (
-        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d')), 'w')
+    '%sfanduel_%s_%d.csv' % (
+        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d'),
+        conf.proj_iteration), 'w')
 writer_fd = csv.DictWriter(fd_proj_file,
                            fieldnames=['name'] +
                            range(conf.simulated_game_count))
 writer_fd.writeheader()
 dk_proj_file = open(
-    '%sdraftkings_%s.csv' % (
-        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d')), 'w')
+    '%sdraftkings_%s_%d.csv' % (
+        conf.projection_output_dir, proj_date.strftime('%Y_%m_%d'),
+        conf.proj_iteration), 'w')
 writer_dk = csv.DictWriter(dk_proj_file,
                            fieldnames=['name'] +
                            range(conf.simulated_game_count))

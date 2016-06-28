@@ -1,0 +1,56 @@
+SELECT s.GAME_ID, s.INN_CT, s.REMOVED_ID
+from subs s inner join games g on s.GAME_ID = g.GAME_ID
+where s.SUB_LINEUP_ID = 9 AND (s.REMOVED_ID = g.AWAY_START_PIT_ID OR s.REMOVED_ID = g.HOME_START_PIT_ID);
+
+output:
++--------------+--------+------------+
+| GAME_ID      | INN_CT | REMOVED_ID |
++--------------+--------+------------+
+| SFN201307050 |      3 | cainm001   |
+| SFN201306230 |      7 | eovan001   |
+| SFN201306230 |      6 | cainm001   |
+| SFN201306220 |      8 | turnj002   |
+| SFN201306220 |      8 | zitob001   |
+| SFN201306210 |      8 | linct001   |
+| SFN201306210 |      6 | nolar001   |
+| SFN201306200 |      8 | koeht001   |
+| SFN201306200 |      5 | gaudc001   |
+| SFN201306190 |      7 | stule002   |
++--------------+--------+------------+
+
++----------+--------------+----------------------+
+| VALUE_CD | SHORTNAME_TX | LONGNAME_TX          |
++----------+--------------+----------------------+
+|        2 | Out          | Generic Out          |
+|        3 | K            | Strikeout            |
+|        4 | SB           | Stolen Base          |
+|        5 | DI           | Defensive Indifferen |
+|        6 | CS           | Caught Stealing      |
+|        8 | PK           | Pickoff              |
+|        9 | WP           | Wild Pitch           |
+|       10 | PB           | Passed Ball          |
+|       11 | BK           | Balk                 |
+|       12 | OA           | Other Advance        |
+|       13 | FE           | Foul Error           |
+|       14 | NIBB         | Nonintentional Walk  |
+|       15 | IBB          | Intentional Walk     |
+|       16 | HBP          | Hit By Pitch         |
+|       17 | XI           | Interference         |
+|       18 | ROE          | Error                |
+|       19 | FC           | Fielder Choice       |
+|       20 | 1B           | Single               |
+|       21 | 2B           | Double               |
+|       22 | 3B           | Triple               |
+|       23 | HR           | Homerun              |
++----------+--------------+----------------------+
+
+Retrieves the count of all important pitching characteristics (stored as starting_pitcher_hist):
+
+SELECT A.game_id, A.removed_id, ev.event_cd, ev.outs_ct, ev.inn_ct, ev.away_score_ct, ev.home_score_ct from
+  (
+  SELECT s.game_id, s.INN_CT, s.removed_id, s.SUB_HOME_ID, s.BAT_HOME_ID from subs s
+  INNER JOIN games g on s.game_id = g.game_id
+  WHERE s.SUB_LINEUP_ID = 9 AND (s.removed_id = g.away_start_pit_id OR s.removed_id = g.home_start_pit_id)
+  ) as A
+INNER JOIN events as ev on ev.GAME_ID = A.GAME_ID
+WHERE ((A.SUB_HOME_ID = 0 AND ev.bat_home_id = 1) OR (A.SUB_HOME_ID = 1 AND ev.bat_home_id = 0) AND A.INN_CT >= ev.inn_ct AND ev.pit_id = A.removed_id) limit 10;

@@ -57,20 +57,23 @@ class GeneticMLB(object):
             graded = [x[1] for x in sorted(graded, key=lambda x: x[0], reverse=True)]
             pop = self.evolve(graded, pos_players)
             # fitness_history.append(self.grade(pop))
-            # valid_teams = [team for team in graded if not
-            #                self._violates_limits(team)]
-            # valid_teams = sorted(valid_teams, key=lambda x: x[0], reverse=True)
-            # if len(valid_teams) > 0:
-            #     best_teams.append(valid_teams[0][1])
-            #     best_teams.append(valid_teams[1][1])
+            valid_teams = [team for team in graded if not
+                           self._violates_limits(team)]
+            valid_teams = sorted(valid_teams, key=lambda x: self.fitness(x), reverse=True)
+            if len(valid_teams) > 0:
+                best_teams.append(valid_teams[0])
         # for datum in fitness_history:
             # history.append(datum)
-        best_teams = pop
+        best_teams += pop
         real_best_teams = []
+        added_teams = []
         for team in best_teams:
-            if self._violates_limits(team):
+            primary_players = frozenset([player for players in [[x.name for x in team[key]] for key in team] for player in players])
+            key = hash(primary_players)
+            if self._violates_limits(team) or key in added_teams:
                 continue
             real_best_teams.append(team)
+            added_teams.append(key)
         if conf.sort_by == 'cost':
             real_best_teams = sorted(real_best_teams, key=lambda x: self.get_team_salary(x), reverse=True)
         elif conf.sort_by == 'cost-points':

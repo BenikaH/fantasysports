@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import urllib3
 import conf
 import pandas as pd
+import numpy as np
 from string import ascii_lowercase
 import pdb
 import re
@@ -36,6 +37,8 @@ def retrieve_player_id_map():
                         pdb.set_trace()
                     player_id_map[b.a.get_text()] = link
     player_id_map['Tyrell Jenkins'] = 'jenkin001tyr'
+    player_id_map['A.J. Reed'] = 'reed--000and'
+    player_id_map['Dillon Overton'] = 'overto001dil'
     return player_id_map
 
 
@@ -61,7 +64,7 @@ def get_player_handedness(player_name):
 
 
 @cache_disk()
-def load_handed_probabilities(player_name, start_year='2013', end_year='2016', pit_or_bat='b'):
+def load_handed_probabilities(player_name, start_year='2015', end_year='2016', pit_or_bat='b'):
     ha = load_historical_player_handedness(player_name, start_year, pit_or_bat)
     hist = None
     if ha is not None:
@@ -77,6 +80,41 @@ def load_handed_probabilities(player_name, start_year='2013', end_year='2016', p
             else:
                 hist = hand
         year += 1
+    # if they have less than 120 plate appearances, average their stats with
+    # league avg
+    try:
+        probs = calculate_probs_from_hist(hist, pit_or_bat)
+        # for less prolific batters, average down to league average
+        if (hist.at['RHP', 'PA'] + hist.at['LHP', 'PA']) < 150:
+            normalize_batting_by_league_avg(probs, pit_or_bat)
+    except:
+        # fallback to below average hitting stats
+        print "No hitting stats found for %s." % player_name
+        return {
+            'LHP': {
+                'OUT': .50,
+                '1B': .105,
+                '2B': .03,
+                '3B': .004,
+                'HR': .01,
+                'BB': .05,
+                'SO': .25,
+                'HBP': .001
+            },
+            'RHP': {
+                'OUT': .50,
+                '1B': .105,
+                '2B': .03,
+                '3B': .004,
+                'HR': .01,
+                'BB': .05,
+                'SO': .25,
+                'HBP': .001
+            }
+        }
+    return probs
+
+def calculate_probs_from_hist(hist, pit_or_bat='b'):
     try:
         if pit_or_bat == 'b':
             single_count_rhp = (hist.at['RHP', 'H'] - (
@@ -155,29 +193,111 @@ def load_handed_probabilities(player_name, start_year='2013', end_year='2016', p
     except:
         # fallback to below average hitting stats
         print "No hitting stats found for %s." % player_name
-        return {
-            'LHP': {
-                'OUT': .50,
-                '1B': .105,
-                '2B': .03,
-                '3B': .004,
-                'HR': .01,
-                'BB': .05,
-                'SO': .25,
-                'HBP': .001
-            },
-            'RHP': {
-                'OUT': .50,
-                '1B': .105,
-                '2B': .03,
-                '3B': .004,
-                'HR': .01,
-                'BB': .05,
-                'SO': .25,
-                'HBP': .001
-            }
-        }
+        return conf.below_avg_batting_probs
     return probs
+
+def normalize_batting_by_league_avg(probs, pit_or_bat='b'):
+    if pit_or_bat == 'b':
+        # LHP
+        probs['LHP']['OUT'] = np.mean(
+            [probs['LHP']['OUT'],
+             conf.below_avg_batting_probs['LHP']['OUT']])
+        probs['LHP']['1B'] = np.mean(
+            [probs['LHP']['1B'],
+             conf.below_avg_batting_probs['LHP']['1B']])
+        probs['LHP']['2B'] = np.mean(
+            [probs['LHP']['2B'],
+             conf.below_avg_batting_probs['LHP']['2B']])
+        probs['LHP']['3B'] = np.mean(
+            [probs['LHP']['3B'],
+             conf.below_avg_batting_probs['LHP']['3B']])
+        probs['LHP']['HR'] = np.mean(
+            [probs['LHP']['HR'],
+             conf.below_avg_batting_probs['LHP']['HR']])
+        probs['LHP']['BB'] = np.mean(
+            [probs['LHP']['BB'],
+             conf.below_avg_batting_probs['LHP']['BB']])
+        probs['LHP']['SO'] = np.mean(
+            [probs['LHP']['SO'],
+             conf.below_avg_batting_probs['LHP']['SO']])
+        probs['LHP']['HBP'] = np.mean(
+            [probs['LHP']['HBP'],
+             conf.below_avg_batting_probs['LHP']['HBP']])
+        # RHP
+        probs['RHP']['OUT'] = np.mean(
+            [probs['RHP']['OUT'],
+             conf.below_avg_batting_probs['LHP']['OUT']])
+        probs['RHP']['1B'] = np.mean(
+            [probs['RHP']['1B'],
+             conf.below_avg_batting_probs['LHP']['1B']])
+        probs['RHP']['2B'] = np.mean(
+            [probs['RHP']['2B'],
+             conf.below_avg_batting_probs['LHP']['2B']])
+        probs['RHP']['3B'] = np.mean(
+            [probs['RHP']['3B'],
+             conf.below_avg_batting_probs['LHP']['3B']])
+        probs['RHP']['HR'] = np.mean(
+            [probs['RHP']['HR'],
+             conf.below_avg_batting_probs['LHP']['HR']])
+        probs['RHP']['BB'] = np.mean(
+            [probs['RHP']['BB'],
+             conf.below_avg_batting_probs['LHP']['BB']])
+        probs['RHP']['SO'] = np.mean(
+            [probs['RHP']['SO'],
+             conf.below_avg_batting_probs['LHP']['SO']])
+        probs['RHP']['HBP'] = np.mean(
+            [probs['RHP']['HBP'],
+             conf.below_avg_batting_probs['LHP']['HBP']])
+    elif pit_or_bat == 'b':
+        probs['LHB']['OUT'] = np.mean(
+            [probs['LHB']['OUT'],
+             conf.below_avg_batting_probs['LHP']['OUT']])
+        probs['LHB']['1B'] = np.mean(
+            [probs['LHB']['1B'],
+             conf.below_avg_batting_probs['LHP']['1B']])
+        probs['LHB']['2B'] = np.mean(
+            [probs['LHB']['2B'],
+             conf.below_avg_batting_probs['LHP']['2B']])
+        probs['LHB']['3B'] = np.mean(
+            [probs['LHB']['3B'],
+             conf.below_avg_batting_probs['LHP']['3B']])
+        probs['LHB']['HR'] = np.mean(
+            [probs['LHB']['HR'],
+             conf.below_avg_batting_probs['LHP']['HR']])
+        probs['LHB']['BB'] = np.mean(
+            [probs['LHB']['BB'],
+             conf.below_avg_batting_probs['LHP']['BB']])
+        probs['LHB']['SO'] = np.mean(
+            [probs['LHB']['SO'],
+             conf.below_avg_batting_probs['LHP']['SO']])
+        probs['LHB']['HBP'] = np.mean(
+            [probs['LHB']['HBP'],
+             conf.below_avg_batting_probs['LHP']['HBP']])
+        # RHB
+        probs['RHB']['OUT'] = np.mean(
+            [probs['RHB']['OUT'],
+             conf.below_avg_batting_probs['LHP']['OUT']])
+        probs['RHB']['1B'] = np.mean(
+            [probs['RHB']['1B'],
+             conf.below_avg_batting_probs['LHP']['1B']])
+        probs['RHB']['2B'] = np.mean(
+            [probs['RHB']['2B'],
+             conf.below_avg_batting_probs['LHP']['2B']])
+        probs['RHB']['3B'] = np.mean(
+            [probs['RHB']['3B'],
+             conf.below_avg_batting_probs['LHP']['3B']])
+        probs['RHB']['HR'] = np.mean(
+            [probs['RHB']['HR'],
+             conf.below_avg_batting_probs['LHP']['HR']])
+        probs['RHB']['BB'] = np.mean(
+            [probs['RHB']['BB'],
+             conf.below_avg_batting_probs['LHP']['BB']])
+        probs['RHB']['SO'] = np.mean(
+            [probs['RHB']['SO'],
+             conf.below_avg_batting_probs['LHP']['SO']])
+        probs['RHB']['HBP'] = np.mean(
+            [probs['RHB']['HBP'],
+             conf.below_avg_batting_probs['LHP']['HBP']])
 
 
 @cache_disk()
@@ -331,25 +451,24 @@ def load_recent_player_game_logs(player_name):
 # TEAM FUNCTIONS #
 ##################
 
-
-@cache_disk()
-def retrieve_team_link_map():
-    """Retrieve links related to teams."""
-    if team_name in conf.bb_ref_teams:
-        team_name = conf.bb_ref_teams[team_name]
-    http = urllib3.PoolManager()
-    team_link_map = {}
-    for char in ascii_lowercase:
-        r = http.urlopen(
-            'GET', 'http://www.baseball-reference.com/teams/%s/' % char,
-            preload_content=False)
-        soup = BeautifulSoup(r.data, 'html5lib')
-        for block in soup.find_all('blockquote'):
-            bolds = block.find_all('b')
-            if len(bolds) > 0:
-                for b in bolds:
-                    link = b.a
-                    team_link_map[link.get_text()] = link.get('href')
+# @cache_disk()
+# def retrieve_team_link_map():
+#     """Retrieve links related to teams."""
+#     if team_name in conf.bb_ref_teams:
+#         team_name = conf.bb_ref_teams[team_name]
+#     http = urllib3.PoolManager()
+#     team_link_map = {}
+#     for char in ascii_lowercase:
+#         r = http.urlopen(
+#             'GET', 'http://www.baseball-reference.com/teams/%s/' % char,
+#             preload_content=False)
+#         soup = BeautifulSoup(r.data, 'html5lib')
+#         for block in soup.find_all('blockquote'):
+#             bolds = block.find_all('b')
+#             if len(bolds) > 0:
+#                 for b in bolds:
+#                     link = b.a
+#                     team_link_map[link.get_text()] = link.get('href')
 
 
 @cache_disk()

@@ -1,4 +1,5 @@
 """Utility File."""
+from __future__ import division
 import math
 import pdb
 import conf
@@ -31,7 +32,12 @@ def print_df_lineup(lineup, gen):
         sorted(df_lineup_dict_to_list(lineup), key=lambda x: (x[1], x[5])),
         headers=['name', 'team', 'pos', 'cost', 'mean', 'batting_pos'],
         tablefmt="pretty")
+    fit = gen.fitness(lineup)
     print "\nFitness: %s" % gen.fitness(lineup)
+    print "Percentage of Scenarios Profitable (> %d points): %d%%" % (
+        conf.profitable_cutoff,
+        ((fit / conf.simulated_game_count) * 100)
+    )
     print "Salary: %s" % gen.get_team_salary(lineup)
     print '\n'
 
