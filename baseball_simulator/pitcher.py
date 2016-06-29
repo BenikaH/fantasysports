@@ -1,4 +1,5 @@
 """Contains pitcher class."""
+from __future__ import division
 import scrapers.baseball_ref_scraper as brs
 from player import Player
 import util.data_loader as dl
@@ -39,12 +40,28 @@ class Pitcher(Player):
             'HBP': 0,
             'HA': 0,
             'ER': 0,
-            'IP': 0
+            'IP': 0,
+            'PA': 0
         }
 
     def _load_handedness_pitching_stats(self):
         return brs.load_handed_probabilities(
             self.name, pit_or_bat='p')
+
+    def get_pitcher_sub_feats(self, gs, score_diff):
+        return [
+            [
+                self.pitch_stats['SO'],
+                self.pitch_stats['BB'],
+                self.pitch_stats['HBP'],
+                self.pitch_stats['PA'],
+                self.pitch_stats['HA'],
+                # gs.get_inning() - 1 + (gs.get_outs() * (1.0 / 3.0)),
+                self.pitch_stats['IP'],
+                self.pitch_stats['ER'],
+                score_diff
+            ]
+        ]
 
     def get_pitching_handedness(self):
         """Return the handedness of the pitcher."""
@@ -53,14 +70,16 @@ class Pitcher(Player):
         try:
             handedness = conf.pitcher_handedness.at[str(self.name), 'Throws']
         except:
-            pdb.set_trace()
             raise ValueError('Pitcher %s handedness not included in doc.' %
                              self.name)
-            # pdb.set_trace()
         return handedness
+
+    def add_batter_faced(self):
+        self.pitch_stats['PA'] += 1
 
     def add_pitch_so(self):
         self.pitch_stats['SO'] += 1
+        self.add_partial_ip()
 
     def add_pitch_ha(self):
         self.pitch_stats['HA'] += 1
@@ -73,3 +92,6 @@ class Pitcher(Player):
 
     def add_pitch_er(self):
         self.pitch_stats['ER'] += 1
+
+    def add_partial_ip(self):
+        self.pitch_stats['IP'] += 1.0 / 3.0

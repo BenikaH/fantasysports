@@ -13,6 +13,14 @@ projection_output_dir = './projections/'
 models_path = './models/'
 retrosheet_path = './data/retrosheet/'
 
+
+"""Modeling Settings"""
+model_iteration = 3
+# 3 -> 1 - 1 model
+used_pitcher_model_name = 'pitcher_sub_model_3.pkl'
+pitcher_neg_samples = 1
+pitcher_total_samples = 3000
+
 """Projection Generation Settings"""
 projection_date = 'today'
 # number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
@@ -59,7 +67,7 @@ population_size = 1000
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
-sort_by = 'fitness'
+sort_by = 'cost-points'
 
 
 """MLB-specific Genetic Settings"""
@@ -71,9 +79,9 @@ stack_bonus = 7.0
 use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
-excluded_batters = ["Peter O'Brien", "Whit Merrifield", "Jett Bandy"]
+excluded_batters = []
 use_inclusion = True
-included_teams = ['MIN', 'NYY', 'TBR', 'BAL', 'TOR', 'CWS', 'CHC', 'MIA', 'CLE', 'DET', 'WAS', 'MIL', 'SDP', 'CIN', 'ARI', 'COL']
+included_teams = ['TOR', 'COL', 'HOU', 'LAA', 'BAL', 'SDP', 'PHI', 'ARI']
 excluded_teams = []
 favored_teams = []
 
@@ -104,6 +112,7 @@ player_id_map = None
 pitcher_handedness = None
 batter_handedness = None
 field_factors = None
+pitcher_sub_model = None
 
 short_to_long_names = {
     'BAL': 'Baltimore',
@@ -386,5 +395,6 @@ known_player_conversions = {
     'Matthew Reynolds': 'Matt Reynolds',
     'Dae-Ho Lee': 'Dae-ho Lee',
     'Thomas Pham': 'Tommy Pham',
-    'Michael Fiers': 'Mike Fiers'
+    'Michael Fiers': 'Mike Fiers',
+    'Matthew Szczur': 'Matt Szczur'
 }

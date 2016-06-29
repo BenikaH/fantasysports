@@ -39,6 +39,8 @@ def retrieve_player_id_map():
     player_id_map['Tyrell Jenkins'] = 'jenkin001tyr'
     player_id_map['A.J. Reed'] = 'reed--000and'
     player_id_map['Dillon Overton'] = 'overto001dil'
+    player_id_map['Joel De La Cruz'] = 'delacr002joe'
+    player_id_map['Brock Stewart'] = 'stewar001bro'
     return player_id_map
 
 

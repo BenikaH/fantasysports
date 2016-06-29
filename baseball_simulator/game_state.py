@@ -81,12 +81,12 @@ class GameState(object):
                 pit_stats['HBP'],
                 sc.calculate_fanduel_pitcher_score(
                     pit_stats['ER'],
-                    6,
+                    pit_stats['IP'],
                     pit_stats['SO'],
                     win),
                 sc.calculate_draftkings_pitcher_score(
                     pit_stats['ER'],
-                    6,
+                    pit_stats['IP'],
                     pit_stats['SO'],
                     win,
                     pit_stats['BB'],
@@ -138,6 +138,7 @@ class GameState(object):
             self.game_log.append(
                 "%s.%d: %s hits into an out." % (
                     self.inn_stage, self.inning, batter.get_name()))
+            pitcher.add_partial_ip()
         # STRIKE OUT
         elif outcome == 'SO':
             self.outs += 1
@@ -263,6 +264,12 @@ class GameState(object):
                 return True
         return False
 
+    def get_away_score(self):
+        return self.score[0]
+
+    def get_home_score(self):
+        return self.score[0]
+
     def get_outs(self):
         return self.outs
 
@@ -286,7 +293,9 @@ class GameState(object):
         scoring_runner.add_run()
         pitcher.add_pitch_er()
 
-    # TODO
+    def get_inning(self):
+        return self.inning
+
     def add_stolen_base(self):
         return None
 
@@ -294,7 +303,6 @@ class GameState(object):
         return self.inn_stage
 
     def update_inning(self):
-
         if self.inn_stage == 'bot':
             self.game_log.append('End of inning %s.' % self.inning)
             self.inn_stage = 'top'

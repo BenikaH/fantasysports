@@ -47,6 +47,7 @@ output:
 'SFN201307050', 'cainm001'
 [inning, outs, pa, run_diff, so, er, bb, h]
 
+"CREATE TEMPORARY TABLE pit_res SELECT * FROM starting_pitcher_hist WHERE game_id = 'SFN201307050' AND pit_id = 'cainm001';"
 --for K, BB, PA, and H
 SELECT game_id, SUM(event_cd=3) as K, SUM(event_cd=14) as BB, COUNT(*) as PA, SUM(event_cd=20) + SUM(event_cd=21) + SUM(event_cd=22) + SUM(event_cd=23) as H FROM starting_pitcher_hist WHERE game_id = 'SFN201307050' AND pit_id = 'cainm001';
 

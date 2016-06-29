@@ -90,20 +90,20 @@ def retrieve_mlb_batting_order():
         team_names = card.find_all('span', class_='team-name')
         try:
             away_team = team_names[0].find(class_='shrt').get_text()
+            away_players = card.find('div', class_='away-team').find(
+                'ul', class_='players').find_all('li', class_='player')
+            away_order = []
+            for player in away_players:
+                try:
+                    away_order.append(str(player.find('a').get_text()))
+                except:
+                    continue
+            pitchers[standardize_team_name(away_team)] = str(card.find(
+                'div', class_='away-team').find(
+                'div', class_='pitcher').find('a').get_text())
+            batting_orders[standardize_team_name(away_team)] = away_order
         except:
             continue
-        away_players = card.find('div', class_='away-team').find(
-            'ul', class_='players').find_all('li', class_='player')
-        away_order = []
-        for player in away_players:
-            try:
-                away_order.append(str(player.find('a').get_text()))
-            except:
-                continue
-        pitchers[standardize_team_name(away_team)] = str(card.find(
-            'div', class_='away-team').find(
-            'div', class_='pitcher').find('a').get_text())
-        batting_orders[standardize_team_name(away_team)] = away_order
         home_team = team_names[1].find(class_='shrt').get_text()
         try:
             home_players = card.find('div', class_='home-team').find(

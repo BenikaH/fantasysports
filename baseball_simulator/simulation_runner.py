@@ -3,12 +3,17 @@ from team import Team
 from game_state import GameState
 from numpy import random as r
 import util.data_loader as dl
+from sklearn.externals import joblib
+import tabulate as t
 import conf
 import pdb
 
 
 def run_simulated_games(away_team_name, home_team_name, game_count=10):
     """Run a number of simulated games between two teams."""
+    if conf.pitcher_sub_model is None:
+        conf.pitcher_sub_model = joblib.load(
+            './models/%s' % conf.used_pitcher_model_name)
     away_team = Team(away_team_name)
     home_team = Team(home_team_name)
     agg_batters = []
@@ -16,6 +21,8 @@ def run_simulated_games(away_team_name, home_team_name, game_count=10):
     agg_pitchers = []
     game_no = 0
     while game_no < game_count:
+        print "Running game %d of %d. (%s vs. %s)" %\
+            (game_no + 1, game_count, away_team_name, home_team_name)
         away_team.start_new_game()
         home_team.start_new_game()
         game_log, score, pit_stats, bat_stats = play_game(away_team, home_team)
@@ -83,14 +90,15 @@ def play_game(away_team, home_team, starting_inn=1):
         # if gs.runners_on_base() and steal_base(gs):
         #     gs.add_stolen_base()
         #     continue
-        if replace_pitcher(gs):
-            if gs.get_stage() == 'top':
-                if home_team.pitcher() == home_team.starting_pitcher():
+        if gs.get_stage() == 'top':
+            if home_team.get_pitcher() == home_team.get_starting_pitcher():
+                if replace_pitcher(gs, home_team.get_pitcher()):
                     home_team.replace_pitcher('Relief')
-            elif gs.get_stage() == 'bot':
-                if away_team.pitcher() == away_team.starting_pitcher():
+                    continue
+        elif gs.get_stage() == 'bot':
+            if away_team.get_pitcher() == away_team.get_starting_pitcher():
+                if replace_pitcher(gs, away_team.get_pitcher()):
                     away_team.replace_pitcher('Relief')
-            continue
         # compute batter outcomes
         if gs.get_stage() == 'top':
             batter = away_team.get_player(gs.batting_pos[0])
@@ -110,15 +118,29 @@ def steal_base(gs):
     return False
 
 
-# TODO
-def replace_pitcher(gs):
-    """Determine whether a manager is likely to replace a pitcher."""
-    return False
+def replace_pitcher(gs, pitcher):
+    if gs.get_stage() == 'top':
+        score_diff = gs.score[1] - gs.score[0]
+    else:
+        score_diff = gs.score[0] - gs.score[1]
+    feats = pitcher.get_pitcher_sub_feats(gs, score_diff)
+    pred = conf.pitcher_sub_model.predict(feats)
+    if pred[0] == 0:
+        return False
+    else:
+        # print '%s subbed out with the following stats.' % pitcher.get_name()
+        # print t.tabulate(
+        #     feats,
+        #     headers=['K', 'BB', 'HBP', 'PA', 'HA', 'IP', 'ER', 'RD'],
+        #     tablefmt='plain'
+        # )
+        return True
 
 
 def play_batter(gs, batter, pitcher, home_team_name=None):
     """Determine the outcome of a pitcher-batter matchup."""
     gs.update_batters()
+    pitcher.add_batter_faced()
     outcome = calculate_hitting_outcome(gs, batter, pitcher, home_team_name)
     return outcome
 
