@@ -7,3 +7,4 @@ cache/*
 data/missing*.csv
 projections/*
 data/*retrosheet.sql
+models/*

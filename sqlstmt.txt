@@ -44,13 +44,27 @@ output:
 |       23 | HR           | Homerun              |
 +----------+--------------+----------------------+
 
+'SFN201307050', 'cainm001'
+[inning, outs, pa, run_diff, so, er, bb, h]
+
+--for K, BB, PA, and H
+SELECT game_id, SUM(event_cd=3) as K, SUM(event_cd=14) as BB, COUNT(*) as PA, SUM(event_cd=20) + SUM(event_cd=21) + SUM(event_cd=22) + SUM(event_cd=23) as H FROM starting_pitcher_hist WHERE game_id = 'SFN201307050' AND pit_id = 'cainm001';
+
+--for IP, ER, and run differential
+SELECT last_inn + (outs_ct * .1) as IP,
+       CASE WHEN pit_team = 1 THEN away_score_ct ELSE home_score_ct END as ER,
+       CASE WHEN pit_team = 1 THEN home_score_ct - away_score_ct ELSE away_score_ct - home_score_ct END as RD
+       FROM starting_pitcher_hist WHERE game_id = 'SFN201307050' AND pit_id = 'cainm001' ORDER BY inn_ct DESC, home_score_ct DESC, away_score_ct DESC limit 1;
+
+, (SELECT last_inn, outs_ct FROM table ORDER BY id DESC LIMIT 1)
+
 Retrieves the count of all important pitching characteristics (stored as starting_pitcher_hist):
 
-SELECT A.game_id, A.removed_id, ev.event_cd, ev.outs_ct, ev.inn_ct, ev.away_score_ct, ev.home_score_ct from
+CREATE TABLE starting_pitcher_hist SELECT A.game_id, A.INN_CT as last_inn, A.sub_home_id as pit_team, A.removed_id as pit_id, ev.event_cd, ev.outs_ct, ev.inn_ct, ev.away_score_ct, ev.home_score_ct from
   (
   SELECT s.game_id, s.INN_CT, s.removed_id, s.SUB_HOME_ID, s.BAT_HOME_ID from subs s
   INNER JOIN games g on s.game_id = g.game_id
   WHERE s.SUB_LINEUP_ID = 9 AND (s.removed_id = g.away_start_pit_id OR s.removed_id = g.home_start_pit_id)
   ) as A
 INNER JOIN events as ev on ev.GAME_ID = A.GAME_ID
-WHERE ((A.SUB_HOME_ID = 0 AND ev.bat_home_id = 1) OR (A.SUB_HOME_ID = 1 AND ev.bat_home_id = 0) AND A.INN_CT >= ev.inn_ct AND ev.pit_id = A.removed_id) limit 10;
+WHERE ((A.SUB_HOME_ID = 0 AND ev.bat_home_id = 1) OR (A.SUB_HOME_ID = 1 AND ev.bat_home_id = 0) AND A.INN_CT >= ev.inn_ct AND ev.pit_id = A.removed_id);

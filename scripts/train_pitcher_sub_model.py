@@ -1,98 +1,76 @@
-import sklearn as sk
-import conf
-from os import listdir
+from sklearn import svm
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.metrics import classification_report
+import numpy as np
 import util.util as u
 import pandas as pd
-import re
+from sklearn.externals import joblib
+import MySQLdb
+import pdb
 
-# def load_retrosheet_roster():
-roster_files = [f for f in listdir(conf.retrosheet_path) if '.ROS' in f]
-roster = None
-for r_f in roster_files:
-    if roster is None:
-        roster = pd.read_csv(
-            '%s%s' % (conf.retrosheet_path, r_f),
-            index_col=0,
-            header=None,
-            names=['last', 'first', 'bats', 'throws', 'team', 'pos'])
-    else:
-        roster = pd.concat(
-            [roster, pd.read_csv(
-                '%s%s' % (conf.retrosheet_path, r_f),
-                index_col=0,
-                header=None,
-                names=['last', 'first', 'bats', 'throws', 'team', 'pos'])])
-print roster
+db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                     user="kmeurer",         # your username
+                     passwd="kvnmrr-1",  # your password
+                     db="retrosheet")        # name of the data base
 
-# training data: [inning, outs, pa, run_diff, so, er, w, h]
-training_data = []
+cur = db.cursor()
 
-ev_files = [f for f in listdir(conf.retrosheet_path) if '.EVA' in f or '.EVN' in f]
-print ev_files
-
-for e_f in ev_files:
-    fi = open('%s%s' % (conf.retrosheet_path, e_f), 'rb')
-    line = fi.readline()
-    while line != '':
-        if 'id,' in line:
-            innning = 0
-            data = {
-                'home': {
-                    'hits': 0,
-                    'er': 0,
-                    'bb': 0,
-                    'so': 0,
-                    'pa': 0
-                },
-                'away': {
-                    'hits': 0,
-                    'er': 0,
-                    'bb': 0,
-                    'so': 0,
-                    'pa': 0
-                }
-            }
-            home_pitcher = None
-            away_pitcher = None
-            outs = 0
-            inning = 1
-            score = [0, 0]
-            line = fi.readline()
-            away_subbed = False
-            home_subbed = False
-            while home_pitcher is None and away_pitcher is None:
-                if 'start,' in line:
-                    line = line.split(',')
-                    if line[3] == 0 and roster.at[line[1], 'pos'] == 'P':
-                        away_pitcher = line[1]
-                    elif line[3] == 1 and roster.at[line[1], 'pos'] == 'P':
-                        home_pitcher = line[1]
-                    line = fi.readline()
-            while not away_subbed and not home_subbed and 'data,' not in line:
-                if 'play,' in line:
-                    line = line.split(',')
-                    if line[6] == 'NP':
-                        inning = line[1]
-                        inn_stage = line[2]
-                        # handle incoming sub
-                        line = fi.readline()
-                        line = line.split(',')
-                        if line[5] == '9':
-                            training_data.append(inning, outs, batters_faced, strikeouts, earned runs, walks, hits)
-
-                    event = line[6].split('/')
-                    event = [event[0]] + event[1].split('.')
-
-                line = fi.readline()
-        else:
-            line = fi.readline()
-            continue
+# Use all the SQL you like
+cur.execute(
+    "SELECT DISTINCT game_id, pit_id from starting_pitcher_hist;")
 
 
-        line = fi.readline()
+positive_training_entries = []
+negative_training_entries = []
+# print all the first cell of all the rows
+ids_and_pits = cur.fetchall()
+for idx, row in enumerate(ids_and_pits):
+    print "Processing pitcher %d of %d" % (idx + 1, len(ids_and_pits))
+    cur.execute("CREATE TEMPORARY TABLE pit_res SELECT * FROM starting_pitcher_hist WHERE game_id = '%s' AND pit_id = '%s';" % (row[0], row[1]))
+    """LOAD DIFFERENTIAL VALUES"""
+    # for IP, ER, and run differential
+    cur.execute(
+        "SELECT inn_ct - 1 + (outs_ct * (1/3)) as IP, CASE WHEN pit_team = 1 THEN away_score_ct ELSE home_score_ct END as ER, CASE WHEN pit_team = 1 THEN home_score_ct - away_score_ct ELSE away_score_ct - home_score_ct END as RD FROM pit_res;"
+    )
+    diffs = cur.fetchall()
+    """POSITIVE ENTRIES (pitcher taken out)"""
+    # they were taken out in the last entry
+    pos_diff = [float(s) for s in diffs[len(diffs) - 1]]
+    cur.execute("SELECT SUM(event_cd=3) as K, SUM(event_cd=14) as BB, COUNT(*) as PA, SUM(event_cd=20) + SUM(event_cd=21) + SUM(event_cd=22) + SUM(event_cd=23) as H FROM pit_res;")
+    pos_stats = cur.fetchall()[0]
+    pos_stats = [float(stat) for stat in pos_stats]
+    pos_stats += pos_diff
 
+    """NEGATIVE ENTRIES (pitcher stayed in)"""
+    # convert neg diffs to be all floats
+    neg_diffs = [[float(a) for a in arr] for arr in diffs[1:]]
+    neg_count = len(diffs) - 1
+    neg_stats = []
+    for i in xrange(neg_count):
+        cur.execute("SELECT SUM(A.event_cd=3) as K, SUM(A.event_cd=14) as BB, COUNT(*) as PA, SUM(A.event_cd=20) + SUM(A.event_cd=21) + SUM(A.event_cd=22) + SUM(A.event_cd=23) as H FROM (SELECT * FROM pit_res limit %d) as A;" % (i + 1))
+        neg_stat = cur.fetchall()[0]
+        neg_stats.append([float(stat) for stat in neg_stat])
+    """LOAD PRIOR GAMES"""
+    # for K, BB, PA, and H
+    # get count of all items in the list
+    neg_stats = map(list.__add__, neg_stats, neg_diffs)
+    positive_training_entries.append(pos_stats)
+    negative_training_entries += neg_stats
+    cur.execute('DROP TABLE pit_res')
+X = np.array(positive_training_entries + negative_training_entries)
+y = np.array(([1] * len(positive_training_entries)) + ([0] * len(negative_training_entries)))
+weights = np.array(([10] * len(positive_training_entries)) + ([1] * len(negative_training_entries)))
+skf = StratifiedKFold(y, n_folds=5)
+scores = list()
+for train_index, test_index in skf:
+    clf = svm.SVC()
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_true = y[train_index], y[test_index]
+    w_train, w_test = weights[train_index], weights[test_index]
+    clf.fit(X_train, y_train, sample_weight=w_train)
+    y_pred = clf.predict(X_test)
+    print classification_report(y_true, y_pred, labels=['0', '1'])
 
-
-
-
-# def load_retrosheet_pbp_data():
+clf = svm.SVC(kernel="linear")
+clf.fit(X, y, sample_weight=weights)
+joblib.dump(clf, './models/pitcher_sub_model.pkl')
