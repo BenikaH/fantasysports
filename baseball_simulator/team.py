@@ -85,12 +85,20 @@ class Team(object):
         ip_count = []
         for p in pot_pitchers:
             ip_count.append(int(bp_dict['IP'][p]))
-        pit = pot_pitchers[ip_count.index(max(ip_count))]
-        if pit in self.roster:
-            self.pitcher = self.roster[pit]
+        new_pit = pot_pitchers[ip_count.index(max(ip_count))]
+        # pit is the name of the pitcher to be replaced
+        if new_pit in self.roster:
             if self.pitcher in self.batting_order:
                 bat_idx = self.batting_order.index(self.pitcher)
-                self.batting_order[bat_idx] = self.roster[pit]
+                self.batting_order[bat_idx] = self.roster[new_pit]
+            self.pitcher = self.roster[new_pit]
+        else:
+            self.roster[new_pit] = Pitcher(new_pit)
+            if self.pitcher in self.batting_order:
+                bat_idx = self.batting_order.index(self.pitcher)
+                self.batting_order[bat_idx] = self.roster[new_pit]
+            self.pitcher = self.roster[new_pit]
+
 
     def _retrieve_projected_batting_order(self, name):
         if conf.batting_orders is None:

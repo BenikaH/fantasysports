@@ -168,20 +168,36 @@ class GeneticMLB(object):
         if key in self.computed_lineups:
             return self.computed_lineups[key]
         else:
-            if self._violates_limits(team):
-                return 0
-            prof_val = self._get_lineup_profitability_count(team)
-            self.computed_lineups[key] = prof_val
-            return prof_val
+            if conf.genetic_approach == 'profitability':
+                if self._violates_limits(team):
+                    return 0
+                prof_val = self._get_lineup_profitability_count(team)
+                self.computed_lineups[key] = prof_val
+                return prof_val
+            elif conf.genetic_approach == 'mean':
+                points = self.get_team_mean_point_total(team)
+                salary = self.get_team_salary(team)
+                if salary > self.max_salary or self._has_duplicate_players(team):
+                    return 0
+                return points
+            else:
+                raise ValueError('Please specify "profitability" or "mean"')
 
-    def _get_lineup_profitability_count(self, team):
+    def _get_lineup_profitability_count(self, team, profitability_cutoff=conf.profitable_cutoff):
         count = 0
         for i in range(conf.simulated_game_count):
-            if self._get_team_point_total(team, i) > conf.profitable_cutoff:
+            if self._get_team_point_total(team, i) > profitability_cutoff:
                 count += 1
         return count
 
     def _get_team_point_total(self, team, simulation_idx):
+        total_points = 0
+        for pos, players in team.iteritems():
+            for player in players:
+                total_points += player[simulation_idx]
+        return total_points
+
+    def _get_team_mean_point_total(self, team):
         total_points = 0
         for pos, players in team.iteritems():
             for player in players:

@@ -54,6 +54,7 @@ def print_lineup(lineup, gen):
     print '\n'
 
 
+
 """DATA FRAME OPTIONS"""
 def df_lineup_dict_to_list(dict_list):
     """
@@ -66,6 +67,7 @@ def df_lineup_dict_to_list(dict_list):
         for player in dict_list[entry]:
             final_list.append(player_df_dict_to_list(player))
     return final_list
+
 
 def player_df_dict_to_list(player):
     new_player = []
@@ -129,10 +131,15 @@ def player_dict_to_list(player):
     return new_player
 
 
+def get_player_id(site='bbref'):
+    return None
+
+
 def standardize_team_name(name):
     if name in conf.long_to_short_names:
         return conf.long_to_short_names[name]
     elif name not in conf.short_to_long_names:
+        print "NOT COVERING: %s" % name
         return "Do not cover %s" % name
     return conf.long_to_short_names[
         conf.short_to_long_names[name]]

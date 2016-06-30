@@ -45,8 +45,12 @@ class Pitcher(Player):
         }
 
     def _load_handedness_pitching_stats(self):
-        return brs.load_handed_probabilities(
-            self.name, pit_or_bat='p')
+        if conf.handedness_source == 'bbref':
+            return brs.load_handed_probabilities(
+                self.name, pit_or_bat='p')
+        elif conf.handedness_source == 'steamers':
+            return dl.load_steamer_handed_probabilities(
+                self.name, pit_or_bat='p')
 
     def get_pitcher_sub_feats(self, gs, score_diff):
         return [

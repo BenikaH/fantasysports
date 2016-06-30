@@ -34,8 +34,8 @@ class GameState(object):
             return False
 
     def get_game_stats(self):
-        away_pit_name, away_pit = self._get_pitcher_stats(self.away_team.get_pitcher())
-        home_pit_name, home_pit = self._get_pitcher_stats(self.home_team.get_pitcher())
+        away_pit_name, away_pit = self._get_pitcher_stats(self.away_team.get_starting_pitcher())
+        home_pit_name, home_pit = self._get_pitcher_stats(self.home_team.get_starting_pitcher())
         pitcher_stats = pd.DataFrame(
             [[self.away_team.get_name()] + away_pit, [self.home_team.get_name()] + home_pit],
             columns=['Team', 'SO', 'BB', 'HA', 'ER', 'HBP', 'FDP', 'DKP'],
@@ -307,12 +307,8 @@ class GameState(object):
             self.game_log.append('End of inning %s.' % self.inning)
             self.inn_stage = 'top'
             self.inning += 1
-            if self.inning == 7:
-                self.home_team.replace_pitcher()
         else:
             self.inn_stage = 'bot'
-            if self.inning == 7:
-                self.away_team.replace_pitcher()
         self.outs = 0
         self.bases = [0, 0, 0]
 

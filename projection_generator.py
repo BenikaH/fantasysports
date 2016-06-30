@@ -53,3 +53,4 @@ for idx, t in enumerate(home_teams):
         dk['name'] = name
         writer_fd.writerow(fd)
         writer_dk.writerow(dk)
+        print name

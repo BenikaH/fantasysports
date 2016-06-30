@@ -15,6 +15,7 @@ import re
 ####################
 
 
+"""Deprecated"""
 @cache_disk()
 def retrieve_player_id_map():
     """Retrieve and cache the links to each player's page."""
@@ -506,12 +507,16 @@ def retrieve_most_recent_batting_order(team_name):
         team_name,
         preload_content=False)
     soup = BeautifulSoup(r.data, 'html5lib')
-    order = soup.find(id='MainContent_gridProjectedLineup').find_all('tr')
-    for row in order:
-        if len(row.find_all('th')) > 0:
-            continue
-        cols = row.find_all('td')
-        bo.append(cols[1].text.strip())
+    try:
+        order = soup.find(id='MainContent_gridProjectedLineup').find_all('tr')
+        for row in order:
+            if len(row.find_all('th')) > 0:
+                continue
+            cols = row.find_all('td')
+            bo.append(cols[1].text.strip())
+    except:
+        pdb.set_trace()
+        return None
     return bo
 
 

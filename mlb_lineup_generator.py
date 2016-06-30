@@ -25,6 +25,14 @@ fmt_date = proj_date.strftime('%Y_%m_%d')
 #     conf.site, '2016_06_23_00:08'),
 #     index_col=0)
 df = pd.read_csv('./projections/%s_%s_%d.csv' % (conf.site, fmt_date, conf.proj_iteration), index_col=0)
+idx = df.index[:]
+means = []
+for p in idx:
+    means.append([np.mean(df.loc[p][0:conf.simulated_game_count])])
+mean_df = pd.DataFrame(means, index=idx, columns=['mean'])
+df = df.join(mean_df)
+
+pdb.set_trace()
 
 # join our two data frames
 projections_overall = df.join(sals_and_pos, how='left')

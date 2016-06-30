@@ -22,13 +22,15 @@ pitcher_neg_samples = 1
 pitcher_total_samples = 3000
 
 """Projection Generation Settings"""
-projection_date = 'today'
+projection_date = 'June 29, 2016'
 # number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
 simulated_game_count = 500
 proj_iteration = 1
+# source of handedness projections (steamers or bbref)
+handedness_source = 'bbref'
 # genetic algorithm settings for simple gen
-# approach: can be 'points' or 'profitability'
-genetic_approach = 'profitability'
+# approach: can be 'mean' or 'profitability'
+genetic_approach = 'mean'
 profitable_cutoff = 190
 
 
@@ -67,7 +69,7 @@ population_size = 1000
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
-sort_by = 'cost-points'
+sort_by = 'fitness'
 
 
 """MLB-specific Genetic Settings"""
@@ -80,9 +82,9 @@ use_batting_orders = True
 min_different_teams = 3
 excluded_pitchers = []
 excluded_batters = []
-use_inclusion = True
-included_teams = ['TOR', 'COL', 'HOU', 'LAA', 'BAL', 'SDP', 'PHI', 'ARI']
-excluded_teams = []
+use_inclusion = False
+included_teams = []
+excluded_teams = ['BOS', 'TBR', 'MIA', 'DET', 'CHC', 'CIN', 'TOR', 'COL', 'HOU', 'LAA', 'BAL', 'SDP', 'PHI', 'ARI']
 favored_teams = []
 
 """NBA-specific Genetic Settings"""
@@ -396,5 +398,6 @@ known_player_conversions = {
     'Dae-Ho Lee': 'Dae-ho Lee',
     'Thomas Pham': 'Tommy Pham',
     'Michael Fiers': 'Mike Fiers',
-    'Matthew Szczur': 'Matt Szczur'
+    'Matthew Szczur': 'Matt Szczur',
+    'Seung Hwan Oh': 'Seung-hwan Oh'
 }

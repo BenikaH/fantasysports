@@ -11,6 +11,8 @@ import pdb
 
 def run_simulated_games(away_team_name, home_team_name, game_count=10):
     """Run a number of simulated games between two teams."""
+    print "Running simulations between %s and %s" %\
+        (away_team_name, home_team_name)
     if conf.pitcher_sub_model is None:
         conf.pitcher_sub_model = joblib.load(
             './models/%s' % conf.used_pitcher_model_name)

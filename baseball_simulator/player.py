@@ -64,7 +64,12 @@ class Player(object):
         }
 
     def _load_handedness_batting_stats(self):
-        return brs.load_handed_probabilities(self.name, '2015', '2016', pit_or_bat='b')
+        if conf.handedness_source == 'bbref':
+            return brs.load_handed_probabilities(
+                self.name, pit_or_bat='b')
+        elif conf.handedness_source == 'steamers':
+            return dl.load_steamer_handed_probabilities(
+                self.name, pit_or_bat='b')
 
     def get_batting_handedness(self):
         """Return the handedness of the batter."""
