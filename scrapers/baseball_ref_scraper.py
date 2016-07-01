@@ -1,12 +1,13 @@
 """Handles all scraping of baseball ref."""
 from __future__ import division
+import sys
 from util.cache import cache_disk
 from bs4 import BeautifulSoup
+from string import ascii_lowercase
 import urllib3
 import conf
 import pandas as pd
 import numpy as np
-from string import ascii_lowercase
 import pdb
 import re
 
@@ -15,7 +16,6 @@ import re
 ####################
 
 
-"""Deprecated"""
 @cache_disk()
 def retrieve_player_id_map():
     """Retrieve and cache the links to each player's page."""
@@ -42,12 +42,12 @@ def retrieve_player_id_map():
     player_id_map['Dillon Overton'] = 'overto001dil'
     player_id_map['Joel De La Cruz'] = 'delacr002joe'
     player_id_map['Brock Stewart'] = 'stewar001bro'
+    player_id_map['Kevin Gausman'] = 'gausmke01'
     return player_id_map
 
 
 def get_player_handedness(player_name):
-    if conf.player_id_map is None:
-        conf.player_id_map = retrieve_player_id_map()
+    u.check_load_player_id_map()
     http = urllib3.PoolManager()
     r = http.urlopen(
             'GET',
@@ -94,7 +94,7 @@ def load_handed_probabilities(player_name, start_year='2015', end_year='2016', p
         # fallback to below average hitting stats
         print "No hitting stats found for %s." % player_name
         return {
-            'LHP': {
+            'vL': {
                 'OUT': .50,
                 '1B': .105,
                 '2B': .03,
@@ -104,7 +104,7 @@ def load_handed_probabilities(player_name, start_year='2015', end_year='2016', p
                 'SO': .25,
                 'HBP': .001
             },
-            'RHP': {
+            'vR': {
                 'OUT': .50,
                 '1B': .105,
                 '2B': .03,
@@ -127,7 +127,7 @@ def calculate_probs_from_hist(hist, pit_or_bat='b'):
                 hist.at['LHP', '2B'] + hist.at['LHP', '3B'] +
                 hist.at['LHP', 'HR']))
             probs = {
-                'RHP': {
+                'vR': {
                     'OUT': (hist.at['RHP', 'PA'] - (
                         single_count_rhp + hist.at['RHP', '2B'] +
                         hist.at['RHP', '3B'] + hist.at['RHP', 'HR'] +
@@ -141,7 +141,7 @@ def calculate_probs_from_hist(hist, pit_or_bat='b'):
                     'SO': hist.at['RHP', 'SO'] / hist.at['RHP', 'PA'],
                     'HBP': hist.at['RHP', 'HBP'] / hist.at['RHP', 'PA']
                 },
-                'LHP': {
+                'vL': {
                     'OUT': (hist.at['LHP', 'PA'] - (
                         single_count_lhp + hist.at['LHP', '2B'] +
                         hist.at['LHP', '3B'] + hist.at['LHP', 'HR'] +
@@ -164,7 +164,7 @@ def calculate_probs_from_hist(hist, pit_or_bat='b'):
                 hist.at['LHB', '2B'] + hist.at['LHB', '3B'] +
                 hist.at['LHB', 'HR']))
             probs = {
-                'RHB': {
+                'vR': {
                     'OUT': (hist.at['RHB', 'PA'] - (
                         single_count_rhb + hist.at['RHB', '2B'] +
                         hist.at['RHB', '3B'] + hist.at['RHB', 'HR'] +
@@ -178,7 +178,7 @@ def calculate_probs_from_hist(hist, pit_or_bat='b'):
                     'SO': hist.at['RHB', 'SO'] / hist.at['RHB', 'PA'],
                     'HBP': hist.at['RHB', 'HBP'] / hist.at['RHB', 'PA']
                 },
-                'LHB': {
+                'vL': {
                     'OUT': (hist.at['LHB', 'PA'] - (
                         single_count_lhb + hist.at['LHB', '2B'] +
                         hist.at['LHB', '3B'] + hist.at['LHB', 'HR'] +
@@ -199,127 +199,76 @@ def calculate_probs_from_hist(hist, pit_or_bat='b'):
         return conf.below_avg_batting_probs
     return probs
 
+
 def normalize_batting_by_league_avg(probs, pit_or_bat='b'):
-    if pit_or_bat == 'b':
-        # LHP
-        probs['LHP']['OUT'] = np.mean(
-            [probs['LHP']['OUT'],
-             conf.below_avg_batting_probs['LHP']['OUT']])
-        probs['LHP']['1B'] = np.mean(
-            [probs['LHP']['1B'],
-             conf.below_avg_batting_probs['LHP']['1B']])
-        probs['LHP']['2B'] = np.mean(
-            [probs['LHP']['2B'],
-             conf.below_avg_batting_probs['LHP']['2B']])
-        probs['LHP']['3B'] = np.mean(
-            [probs['LHP']['3B'],
-             conf.below_avg_batting_probs['LHP']['3B']])
-        probs['LHP']['HR'] = np.mean(
-            [probs['LHP']['HR'],
-             conf.below_avg_batting_probs['LHP']['HR']])
-        probs['LHP']['BB'] = np.mean(
-            [probs['LHP']['BB'],
-             conf.below_avg_batting_probs['LHP']['BB']])
-        probs['LHP']['SO'] = np.mean(
-            [probs['LHP']['SO'],
-             conf.below_avg_batting_probs['LHP']['SO']])
-        probs['LHP']['HBP'] = np.mean(
-            [probs['LHP']['HBP'],
-             conf.below_avg_batting_probs['LHP']['HBP']])
-        # RHP
-        probs['RHP']['OUT'] = np.mean(
-            [probs['RHP']['OUT'],
-             conf.below_avg_batting_probs['LHP']['OUT']])
-        probs['RHP']['1B'] = np.mean(
-            [probs['RHP']['1B'],
-             conf.below_avg_batting_probs['LHP']['1B']])
-        probs['RHP']['2B'] = np.mean(
-            [probs['RHP']['2B'],
-             conf.below_avg_batting_probs['LHP']['2B']])
-        probs['RHP']['3B'] = np.mean(
-            [probs['RHP']['3B'],
-             conf.below_avg_batting_probs['LHP']['3B']])
-        probs['RHP']['HR'] = np.mean(
-            [probs['RHP']['HR'],
-             conf.below_avg_batting_probs['LHP']['HR']])
-        probs['RHP']['BB'] = np.mean(
-            [probs['RHP']['BB'],
-             conf.below_avg_batting_probs['LHP']['BB']])
-        probs['RHP']['SO'] = np.mean(
-            [probs['RHP']['SO'],
-             conf.below_avg_batting_probs['LHP']['SO']])
-        probs['RHP']['HBP'] = np.mean(
-            [probs['RHP']['HBP'],
-             conf.below_avg_batting_probs['LHP']['HBP']])
-    elif pit_or_bat == 'b':
-        probs['LHB']['OUT'] = np.mean(
-            [probs['LHB']['OUT'],
-             conf.below_avg_batting_probs['LHP']['OUT']])
-        probs['LHB']['1B'] = np.mean(
-            [probs['LHB']['1B'],
-             conf.below_avg_batting_probs['LHP']['1B']])
-        probs['LHB']['2B'] = np.mean(
-            [probs['LHB']['2B'],
-             conf.below_avg_batting_probs['LHP']['2B']])
-        probs['LHB']['3B'] = np.mean(
-            [probs['LHB']['3B'],
-             conf.below_avg_batting_probs['LHP']['3B']])
-        probs['LHB']['HR'] = np.mean(
-            [probs['LHB']['HR'],
-             conf.below_avg_batting_probs['LHP']['HR']])
-        probs['LHB']['BB'] = np.mean(
-            [probs['LHB']['BB'],
-             conf.below_avg_batting_probs['LHP']['BB']])
-        probs['LHB']['SO'] = np.mean(
-            [probs['LHB']['SO'],
-             conf.below_avg_batting_probs['LHP']['SO']])
-        probs['LHB']['HBP'] = np.mean(
-            [probs['LHB']['HBP'],
-             conf.below_avg_batting_probs['LHP']['HBP']])
-        # RHB
-        probs['RHB']['OUT'] = np.mean(
-            [probs['RHB']['OUT'],
-             conf.below_avg_batting_probs['LHP']['OUT']])
-        probs['RHB']['1B'] = np.mean(
-            [probs['RHB']['1B'],
-             conf.below_avg_batting_probs['LHP']['1B']])
-        probs['RHB']['2B'] = np.mean(
-            [probs['RHB']['2B'],
-             conf.below_avg_batting_probs['LHP']['2B']])
-        probs['RHB']['3B'] = np.mean(
-            [probs['RHB']['3B'],
-             conf.below_avg_batting_probs['LHP']['3B']])
-        probs['RHB']['HR'] = np.mean(
-            [probs['RHB']['HR'],
-             conf.below_avg_batting_probs['LHP']['HR']])
-        probs['RHB']['BB'] = np.mean(
-            [probs['RHB']['BB'],
-             conf.below_avg_batting_probs['LHP']['BB']])
-        probs['RHB']['SO'] = np.mean(
-            [probs['RHB']['SO'],
-             conf.below_avg_batting_probs['LHP']['SO']])
-        probs['RHB']['HBP'] = np.mean(
-            [probs['RHB']['HBP'],
-             conf.below_avg_batting_probs['LHP']['HBP']])
+    # LHP
+    probs['vL']['OUT'] = np.mean(
+        [probs['vL']['OUT'],
+         conf.below_avg_batting_probs['vL']['OUT']])
+    probs['vL']['1B'] = np.mean(
+        [probs['vL']['1B'],
+         conf.below_avg_batting_probs['vL']['1B']])
+    probs['vL']['2B'] = np.mean(
+        [probs['vL']['2B'],
+         conf.below_avg_batting_probs['vL']['2B']])
+    probs['vL']['3B'] = np.mean(
+        [probs['vL']['3B'],
+         conf.below_avg_batting_probs['vL']['3B']])
+    probs['vL']['HR'] = np.mean(
+        [probs['vL']['HR'],
+         conf.below_avg_batting_probs['vL']['HR']])
+    probs['vL']['BB'] = np.mean(
+        [probs['vL']['BB'],
+         conf.below_avg_batting_probs['vL']['BB']])
+    probs['vL']['SO'] = np.mean(
+        [probs['vL']['SO'],
+         conf.below_avg_batting_probs['vL']['SO']])
+    probs['vL']['HBP'] = np.mean(
+        [probs['vL']['HBP'],
+         conf.below_avg_batting_probs['vL']['HBP']])
+    # RHP
+    probs['vR']['OUT'] = np.mean(
+        [probs['vR']['OUT'],
+         conf.below_avg_batting_probs['vR']['OUT']])
+    probs['vR']['1B'] = np.mean(
+        [probs['vR']['1B'],
+         conf.below_avg_batting_probs['vR']['1B']])
+    probs['vR']['2B'] = np.mean(
+        [probs['vR']['2B'],
+         conf.below_avg_batting_probs['vR']['2B']])
+    probs['vR']['3B'] = np.mean(
+        [probs['vR']['3B'],
+         conf.below_avg_batting_probs['vR']['3B']])
+    probs['vR']['HR'] = np.mean(
+        [probs['vR']['HR'],
+         conf.below_avg_batting_probs['vR']['HR']])
+    probs['vR']['BB'] = np.mean(
+        [probs['vR']['BB'],
+         conf.below_avg_batting_probs['vR']['BB']])
+    probs['vR']['SO'] = np.mean(
+        [probs['vR']['SO'],
+         conf.below_avg_batting_probs['vR']['SO']])
+    probs['vR']['HBP'] = np.mean(
+        [probs['vR']['HBP'],
+         conf.below_avg_batting_probs['vR']['HBP']])
 
 
 @cache_disk()
 def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'):
-    if conf.player_id_map is None:
-        conf.player_id_map = retrieve_player_id_map()
+    idm = retrieve_player_id_map()
     if player_name in conf.known_player_conversions:
         player_name = conf.known_player_conversions[player_name]
     http = urllib3.PoolManager()
-    if player_name in conf.player_id_map:
+    if player_name in idm:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
-                         (conf.player_id_map[player_name], year, pit_or_bat),
+                         (idm[player_name], year, pit_or_bat),
                          preload_content=False)
     elif player_name in conf.known_player_conversions and\
-            conf.known_player_conversions[player_name] in conf.player_id_map:
+            conf.known_player_conversions[player_name] in idm:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
-                         (conf.player_id_map[player_name], year, pit_or_bat),
+                         (idm[player_name], year, pit_or_bat),
                          preload_content=False)
     else:
         pdb.set_trace()
@@ -364,15 +313,14 @@ def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'
 @cache_disk()
 def load_historical_player_game_logs(player_name, year='2015'):
     """Load logs of a player's games from a specific year."""
-    if conf.player_id_map is None:
-        conf.player_id_map = retrieve_player_id_map()
+    u.check_load_player_id_map()
     http = urllib3.PoolManager()
     agg_stats = None
     if player_name in conf.player_id_map:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/gl.cgi?' +
                          'id=%s&t=b&year=%s' %
-                         (conf.player_id_map[player_name], year),
+                         (conf.player_id_map.at[player_name, 'BREFID'], year),
                          preload_content=False)
         soup = BeautifulSoup(r.data, 'html5lib')
         player_games = soup.find(id='batting_gamelogs').find_all('tr')
@@ -409,14 +357,13 @@ def load_historical_player_game_logs(player_name, year='2015'):
 
 def load_recent_player_game_logs(player_name):
     """Load same as above but with no caching."""
-    if conf.player_id_map is None:
-        conf.player_id_map = retrieve_player_id_map()
+    u.check_load_player_id_map()
     http = urllib3.PoolManager()
     agg_stats = None
     if player_name in conf.player_id_map:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/gl.cgi?id=%s&t=b&year=2016' %
-                         (conf.player_id_map[player_name]),
+                         (conf.player_id_map.at[player_name, 'BREFID']),
                          preload_content=False)
         soup = BeautifulSoup(r.data, 'html5lib')
         player_games = soup.find(id='batting_gamelogs').find_all('tr')

@@ -4,6 +4,7 @@ import math
 import pdb
 import conf
 from tabulate import tabulate
+import data_loader as dl
 import numpy as np
 
 
@@ -52,7 +53,6 @@ def print_lineup(lineup, gen):
     print "Salary: %s" % gen.get_team_salary(lineup)
     print "Projected Points: %s" % gen.get_team_point_total(lineup)
     print '\n'
-
 
 
 """DATA FRAME OPTIONS"""
@@ -131,10 +131,6 @@ def player_dict_to_list(player):
     return new_player
 
 
-def get_player_id(site='bbref'):
-    return None
-
-
 def standardize_team_name(name):
     if name in conf.long_to_short_names:
         return conf.long_to_short_names[name]
@@ -143,3 +139,49 @@ def standardize_team_name(name):
         return "Do not cover %s" % name
     return conf.long_to_short_names[
         conf.short_to_long_names[name]]
+
+
+def standardize_player_name(name):
+    check_load_player_id_map()
+    if name in conf.player_id_map.index:
+        return name
+    elif name in conf.player_id_map['cbs_name'].values:
+        return conf.player_id_map.iloc[
+            np.where(
+                conf.player_id_map['cbs_name'].values == name)[0][0]].name
+    elif name in conf.player_id_map['retro_name'].values:
+        return conf.player_id_map.iloc[
+            np.where(
+                conf.player_id_map['retro_name'].values == name)[0][0]].name
+    elif name in conf.player_id_map['bref_name'].values:
+        return conf.player_id_map.iloc[
+            np.where(
+                conf.player_id_map['bref_name'].values == name)[0][0]].name
+    elif name in conf.player_id_map['nfbc_name'].values:
+        return conf.player_id_map.iloc[
+            np.where(
+                conf.player_id_map['infbc_name'].values == name)[0][0]].name
+    elif name in conf.player_id_map['yahoo_name'].values:
+        return conf.player_id_map.iloc[
+            np.where(
+                conf.player_id_map['yahoo_name'].values == name)[0][0]].name
+    # try modifying case and punctuation
+    stripped_name = strip_name(name)
+    stripped_idx = [strip_name(x) for x in conf.player_id_map.index]
+    if stripped_name in stripped_idx:
+        return conf.player_id_map.iloc[stripped_idx.index(stripped_name)].name
+    else:
+        raise ValueError("Unable to standardize the name of %s." % name)
+
+
+def get_bbref_name(name):
+    return conf.player_id_map.at[name, 'bref_name']
+
+
+def strip_name(name):
+    return name.lower().replace('.', '').replace('-', '').replace(' ', '')
+
+
+def check_load_player_id_map():
+    if conf.player_id_map is None:
+        conf.player_id_map = dl.load_player_id_map()

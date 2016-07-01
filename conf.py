@@ -12,6 +12,10 @@ field_factors_path = './data/field_factors.csv'
 projection_output_dir = './projections/'
 models_path = './models/'
 retrosheet_path = './data/retrosheet/'
+# id_map_path = './data/player_id_map.csv'
+id_map_path = 'http://crunchtimebaseball.com/master.csv'
+steamer_preseason_split_pit_path =\
+    './data/steamer_projections_pitchers_preseason.csv'
 
 
 """Modeling Settings"""
@@ -27,7 +31,7 @@ projection_date = 'June 29, 2016'
 simulated_game_count = 500
 proj_iteration = 1
 # source of handedness projections (steamers or bbref)
-handedness_source = 'bbref'
+handedness_source = 'steamer'
 # genetic algorithm settings for simple gen
 # approach: can be 'mean' or 'profitability'
 genetic_approach = 'mean'
@@ -46,6 +50,7 @@ rotogrinder_pitcher_path =\
     'http://rotogrinders.com/projected-stats/mlb-pitcher.csv?site=%s' % site
 rotogrinder_nba_path =\
     'http://rotogrinders.com/projected-stats/nba-player.csv?site=%s' % site
+steamer_ros_split_bat_path = 'http://steamerprojections.com/hitters_ros_split.php'
 
 
 """General Genetic Settings"""
@@ -115,6 +120,8 @@ pitcher_handedness = None
 batter_handedness = None
 field_factors = None
 pitcher_sub_model = None
+steamer_batter_data = None
+steamer_pitcher_data = None
 
 short_to_long_names = {
     'BAL': 'Baltimore',

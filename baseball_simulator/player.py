@@ -1,6 +1,7 @@
 """Holds player class."""
 import scrapers.baseball_ref_scraper as brs
 import util.data_loader as dl
+import util.util as u
 import conf
 import pdb
 
@@ -11,20 +12,16 @@ class Player(object):
     def __init__(self, name):
         """Initialization function."""
         self.game_logs = None
-        self.name = name
-        self.handedness = None
-        if name == 'generic':
-            self.handedness = 'RIGHT'
-            self.handedness_batting_stats = {}
-            self.handedness_batting_stats['RHP'] = conf.league_totals['PROBS']
-            self.handedness_batting_stats['LHP'] = conf.league_totals['PROBS']
-            return
+        self.name = u.standardize_player_name(name)
+        self.mlb_id = dl.get_player_mlb_id(self.name)
+        self.bat_handedness = self._load_batting_handedness()
+        conf.player_id_map.at[self.name, 'bats']
         self.handedness_batting_stats = self._load_handedness_batting_stats()
         # DEFAULT TO LEAGUE AVERAGE: FIX TO LOWER THRESHOLD
         if self.handedness_batting_stats is None:
             self.handedness_batting_stats = {}
-            self.handedness_batting_stats['RHP'] = conf.league_totals['PROBS']
-            self.handedness_batting_stats['LHP'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['vR'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['vL'] = conf.league_totals['PROBS']
         self.bat_stats = {
             'SO': 0,
             'BB': 0,
@@ -42,10 +39,14 @@ class Player(object):
 
     def get_handed_batting_probs(self, opp_handedness):
         """Return probabilities of batting outcomes."""
-        if opp_handedness == 'RIGHT':
-            return self.handedness_batting_stats['RHP']
+        if opp_handedness == 'R':
+            return self.handedness_batting_stats['vR']
         else:
-            return self.handedness_batting_stats['LHP']
+            return self.handedness_batting_stats['vL']
+
+    def _load_batting_handedness(self):
+        return conf.player_id_map[
+            conf.player_id_map.mlb_id == self.mlb_id]['bats'][0]
 
     def start_new_game(self):
         self.game_history.append(self.bat_stats)
@@ -67,16 +68,18 @@ class Player(object):
         if conf.handedness_source == 'bbref':
             return brs.load_handed_probabilities(
                 self.name, pit_or_bat='b')
-        elif conf.handedness_source == 'steamers':
-            return dl.load_steamer_handed_probabilities(
-                self.name, pit_or_bat='b')
+        elif conf.handedness_source == 'steamer':
+            try:
+                ha = dl.load_steamer_handed_probabilities(
+                    self.mlb_id, pit_or_bat='b')
+            except:
+                ha = brs.load_handed_probabilities(
+                    self.name, pit_or_bat='b')
+            return ha
 
     def get_batting_handedness(self):
         """Return the handedness of the batter."""
-        if conf.batter_handedness is None:
-            conf.batter_handedness = dl.load_handedness_data('b')
-        handedness = conf.batter_handedness.at[self.name, 'Bats']
-        return handedness
+        return self.bat_handedness
 
     def get_name(self):
         """Return name of batter."""

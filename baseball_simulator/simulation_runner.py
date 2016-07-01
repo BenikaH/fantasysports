@@ -152,10 +152,10 @@ def calculate_hitting_outcome(gs, batter, pitcher, home_team_name=None):
     # possibilities: 1b, 2b, 3b, hr, bb, hbp, so, ground out
     bat_hand = batter.get_batting_handedness()
     pit_hand = pitcher.get_pitching_handedness()
-    if bat_hand == 'SWITCH' and pit_hand == 'RIGHT':
-        bat_hand = 'LEFT'
-    if bat_hand == 'SWITCH' and pit_hand == 'LEFT':
-        bat_hand = 'RIGHT'
+    if bat_hand == 'S' and pit_hand == 'R':
+        bat_hand = 'L'
+    if bat_hand == 'S' and pit_hand == 'L':
+        bat_hand = 'R'
     pit_probs = dict(pitcher.get_handed_pitching_probs(bat_hand))
     bat_probs = dict(batter.get_handed_batting_probs(pit_hand))
     # probability adjustments for field, weather, etc
