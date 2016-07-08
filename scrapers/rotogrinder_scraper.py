@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import urllib3
-from util.util import standardize_team_name
+from util.util import standardize_team_name, standardize_player_name
 import util.util as u
 import csv
 import io
@@ -51,7 +51,7 @@ def retrieve_mlb_player_salaries_and_positions():
     r = http.urlopen('GET', conf.rotogrinder_hitter_path, preload_content=False)
     hitter_data = csv.reader(r)
     data_formatted = [entry for entry in hitter_data]
-    names = [entry[0] for entry in data_formatted][1:]
+    names = [standardize_player_name(entry[0]) for entry in data_formatted[1:]]
     batter_info = [entry[1:] for entry in data_formatted][1:]
     player_info = [[float(el[0])] + el[1:4] for el in batter_info]
 
@@ -59,7 +59,16 @@ def retrieve_mlb_player_salaries_and_positions():
     r = http.urlopen('GET', conf.rotogrinder_pitcher_path, preload_content=False)
     pitcher_data = csv.reader(r)
     data_formatted = [entry for entry in pitcher_data]
-    names += [entry[0] for entry in data_formatted][1:]
+    # name_add = []
+    # plyr_add = []
+    # for d in data_formatted[1:]:
+    #     try:
+    #         name = standardize_player_name(entry[0])
+    #         name_add.append(name)
+    #         plyr_add.append()
+    #     except:
+    #         continue
+    names += [standardize_player_name(entry[0]) for entry in data_formatted[1:]]
     pitcher_info = [entry[1:] for entry in data_formatted][1:]
     player_info += [[float(el[0])] + el[1:4] for el in pitcher_info]
     player_data_frame = pd.DataFrame(
@@ -121,13 +130,14 @@ def retrieve_mlb_batting_order():
             for player in home_players:
                 home_order.append(u.standardize_player_name(
                     str(player.find('a').get_text())))
+            pitchers[standardize_team_name(home_team)] =\
+                u.standardize_player_name(
+                    str(card.find(
+                        'div', class_='home-team').find(
+                        'div', class_='pitcher').find('a').get_text()))
+            batting_orders[standardize_team_name(home_team)] = home_order
         except:
+            print "Error retrieving projections for %s" % home_team
             continue
-        pitchers[standardize_team_name(home_team)] =\
-            u.standardize_player_name(
-                str(card.find(
-                    'div', class_='home-team').find(
-                    'div', class_='pitcher').find('a').get_text()))
-        batting_orders[standardize_team_name(home_team)] = home_order
     return batting_orders, pitchers
 

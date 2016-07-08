@@ -1,6 +1,7 @@
 import util.score_calculators as sc
 import pandas as pd
 import util.data_loader as dl
+from numpy import random as r
 import math
 import conf
 import pdb
@@ -186,16 +187,42 @@ class GameState(object):
                 self.inn_stage, self.inning, batter.get_name()))
             batter.add_1b()
             # advance runners
-            # everyone moves forward 1 (may adapt later)
+            # runner on third scores
             if self.bases[2] != 0:
                 self.add_run(self.bases[2], pitcher)
                 batter.add_rbi()
                 self.bases[2] = 0
+            # if runner on second, test if they go home
             if self.bases[1] != 0:
-                self.bases[2] = self.bases[1]
+                ran = r.rand()
+                # if runner on 2nd goes home, advance
+                if ran < conf.baserunning_avg['2SH']:
+                    self.add_run(self.bases[1], pitcher)
+                    batter.add_rbi()
+                    # test first base here
+                    ran = r.rand()
+                    if self.bases[0] != 0:
+                        if ran < conf.baserunning_avg['1S3']:
+                            self.bases[2] = self.bases[0]
+                            self.bases[0] = 0
+                        else:
+                            self.bases[1] = self.bases[0]
+                            self.bases[0] = 0
+                else:
+                    # advance 2 -> 3
+                    self.bases[2] = self.bases[1]
+                    # if runner on 1st, advance 1 -> 2
+                    if self.bases[0] != 0:
+                        self.bases[1] = self.bases[0]
+                        self.bases[0] = 0
                 self.bases[1] = 0
-            if self.bases[0] != 0:
-                self.bases[1] = self.bases[0]
+            # if no runner on second, test if runner on first goes to 3
+            elif self.bases[0] != 0:
+                ran = r.rand()
+                if ran < conf.baserunning_avg['1S3']:
+                    self.bases[2] = self.bases[0]
+                else:
+                    self.bases[1] = self.bases[0]
                 self.bases[0] = 0
             self.bases[0] = batter
         # DOUBLE
@@ -210,7 +237,12 @@ class GameState(object):
                 batter.add_rbi()
                 self.bases[1] = 0
             if self.bases[0] != 0:
-                self.bases[2] = self.bases[0]
+                ran = r.rand()
+                if ran < conf.baserunning_avg['1DH']:
+                    self.add_run(self.bases[0], pitcher)
+                    batter.add_rbi()
+                else:
+                    self.bases[2] = self.bases[0]
                 self.bases[0] = 0
             self.bases[1] = batter
         # TRIPLE
@@ -264,6 +296,11 @@ class GameState(object):
                 return True
         return False
 
+    def remove_runner(self, base):
+        self.game_log.append("%s.%d: %s caught stealing." % (
+            self.inn_stage, self.inning, self.bases[base].get_name()))
+        self.bases[base] = 0
+
     def get_away_score(self):
         return self.score[0]
 
@@ -296,8 +333,13 @@ class GameState(object):
     def get_inning(self):
         return self.inning
 
-    def add_stolen_base(self):
-        return None
+    def add_stolen_base(self, base_idx):
+        self.game_log.append("%s.%d:%s steals base %d." % (
+            self.inn_stage, self.inning,
+            self.bases[base_idx].get_name(), base_idx + 2))
+        self.bases[base_idx].add_sb()
+        self.bases[base_idx + 1] = self.bases[base_idx]
+        self.bases[base_idx] = 0
 
     def get_stage(self):
         return self.inn_stage

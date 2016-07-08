@@ -30,14 +30,22 @@ def print_top_df_lineups(lineup_list, gen, num=10):
 def print_df_lineup(lineup, gen):
     """Print the full lineup of dataframe objects and its fitness, salary, and proj. points."""
     print tabulate(
-        sorted(df_lineup_dict_to_list(lineup), key=lambda x: (x[1], x[5])),
-        headers=['name', 'team', 'pos', 'cost', 'mean', 'batting_pos'],
+        sorted(df_lineup_dict_to_list(lineup), key=lambda x: (x[1], x[6])),
+        headers=['name', 'team', 'pos', 'cost', 'mean proj.', 'mean agg.', 'batting_pos'],
         tablefmt="pretty")
-    fit = gen.fitness(lineup)
     print "\nFitness: %s" % gen.fitness(lineup)
-    print "Percentage of Scenarios Profitable (> %d points): %d%%" % (
-        conf.profitable_cutoff,
-        ((fit / conf.simulated_game_count) * 100)
+    print "Average Score Value: %d" % gen.get_team_mean_point_total(lineup)
+    print "Percentage of Scenarios Profitable (> 120 points): %d%%" % (
+        ((gen._get_lineup_profitability_count(lineup, 120) / conf.optimizer_game_count) * 100)
+    )
+    print "Percentage of Scenarios Profitable (> 150 points): %d%%" % (
+        ((gen._get_lineup_profitability_count(lineup, 150) / conf.optimizer_game_count) * 100)
+    )
+    print "Percentage of Scenarios Profitable (> 180 points): %d%%" % (
+        ((gen._get_lineup_profitability_count(lineup, 180) / conf.optimizer_game_count) * 100)
+    )
+    print "Percentage of Scenarios Profitable (> 210 points): %d%%" % (
+        ((gen._get_lineup_profitability_count(lineup, 210) / conf.optimizer_game_count) * 100)
     )
     print "Salary: %s" % gen.get_team_salary(lineup)
     print '\n'
@@ -78,6 +86,7 @@ def player_df_dict_to_list(player):
     new_player.append(player.loc['pos'])
     new_player.append(player.loc['cost'])
     new_player.append(get_player_projection_mean(player))
+    new_player.append(player.loc['mean'])
     try:
         if name in conf.batting_orders[team]:
             new_player.append(
@@ -91,7 +100,7 @@ def player_df_dict_to_list(player):
 
 def get_player_projection_mean(player):
     proj = []
-    for i in xrange(conf.simulated_game_count):
+    for i in xrange(conf.optimizer_game_count):
         proj.append(player.loc[str(i)])
     return np.mean(proj)
 
@@ -167,11 +176,18 @@ def standardize_player_name(name):
                 conf.player_id_map['yahoo_name'].values == name)[0][0]].name
     # try modifying case and punctuation
     stripped_name = strip_name(name)
+    stripped_shortened_name = stripped_name[0:2] + stripped_name[len(stripped_name) - 4:len(stripped_name)]
     stripped_idx = [strip_name(x) for x in conf.player_id_map.index]
     if stripped_name in stripped_idx:
         return conf.player_id_map.iloc[stripped_idx.index(stripped_name)].name
+    elif stripped_shortened_name in [x[0:2] + x[len(x) - 4:len(x)] for x in stripped_idx]:
+        return conf.player_id_map.iloc[
+            [x[0:2] + x[len(x) - 4:len(x)] for x in stripped_idx].index(stripped_shortened_name)].name
     else:
-        raise ValueError("Unable to standardize the name of %s." % name)
+        print "Unable to standardize the name of %s." % name
+        return name
+        # return None
+        # raise ValueError("Unable to standardize the name of %s." % name)
 
 
 def get_bbref_name(name):
@@ -179,7 +195,7 @@ def get_bbref_name(name):
 
 
 def strip_name(name):
-    return name.lower().replace('.', '').replace('-', '').replace(' ', '')
+    return name.lower().replace(' jr.', '').replace('.', '').replace('-', '').replace(' ', '')
 
 
 def check_load_player_id_map():

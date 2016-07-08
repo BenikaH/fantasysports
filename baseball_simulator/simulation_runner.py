@@ -89,9 +89,17 @@ def play_game(away_team, home_team, starting_inn=1):
     while gs.game_on():
         # play innings
         # test for stolen bases, pitcher replacement, etc
-        # if gs.runners_on_base() and steal_base(gs):
-        #     gs.add_stolen_base()
-        #     continue
+        stolen_base = steal_base(gs) # returns index of runner that's attempting
+        if stolen_base >= 0:
+            print "STEAL!"
+            ran = r.rand()
+            # if it's a success, give it to them.  If not, they're out.
+            if ran < gs.bases[stolen_base].get_stolen_base_chance()['success']:
+                gs.add_stolen_base(stolen_base)
+            else:
+                gs.remove_runner(stolen_base)
+            continue
+        # test if pitcher replaced
         if gs.get_stage() == 'top':
             if home_team.get_pitcher() == home_team.get_starting_pitcher():
                 if replace_pitcher(gs, home_team.get_pitcher()):
@@ -116,8 +124,19 @@ def play_game(away_team, home_team, starting_inn=1):
 
 # TODO
 def steal_base(gs):
-    """Determine whether a manager is likely to replace a pitcher."""
-    return False
+    # if someone on first with second open
+    if gs.bases[0] != 0 and gs.bases[1] == 0:
+        ran = r.rand()
+        sb_chance = gs.bases[0].get_stolen_base_chance()
+        if ran < sb_chance['steal']:
+            return 0
+    # if someone on second with third open
+    elif gs.bases[1] != 0 and gs.bases[2] == 0:
+        ran = r.rand()
+        sb_chance = gs.bases[1].get_stolen_base_chance()
+        if ran < sb_chance['steal']:
+            return 1
+    return - 1
 
 
 def replace_pitcher(gs, pitcher):
@@ -156,6 +175,9 @@ def calculate_hitting_outcome(gs, batter, pitcher, home_team_name=None):
         bat_hand = 'L'
     if bat_hand == 'S' and pit_hand == 'L':
         bat_hand = 'R'
+    # determine relevant league average
+    league_key = '%sv%s' % (bat_hand, pit_hand)
+
     pit_probs = dict(pitcher.get_handed_pitching_probs(bat_hand))
     bat_probs = dict(batter.get_handed_batting_probs(pit_hand))
     # probability adjustments for field, weather, etc
@@ -164,53 +186,56 @@ def calculate_hitting_outcome(gs, batter, pitcher, home_team_name=None):
     # compute the denominator in advance
     outcome_den = (
         ((bat_probs['1B'] * pit_probs['1B']) /
-            conf.league_totals['PROBS']['1B']) +
+            conf.league_average[league_key]['1B']) +
         ((bat_probs['2B'] * pit_probs['2B']) /
-            conf.league_totals['PROBS']['2B']) +
+            conf.league_average[league_key]['2B']) +
         ((bat_probs['3B'] * pit_probs['3B']) /
-            conf.league_totals['PROBS']['3B']) +
+            conf.league_average[league_key]['3B']) +
         ((bat_probs['HR'] * pit_probs['HR']) /
-            conf.league_totals['PROBS']['HR']) +
+            conf.league_average[league_key]['HR']) +
         ((bat_probs['BB'] * pit_probs['BB']) /
-            conf.league_totals['PROBS']['BB']) +
+            conf.league_average[league_key]['BB']) +
         ((bat_probs['HBP'] * pit_probs['HBP']) /
-            conf.league_totals['PROBS']['HBP']) +
+            conf.league_average[league_key]['HBP']) +
         ((bat_probs['SO'] * pit_probs['SO']) /
-            conf.league_totals['PROBS']['SO']) +
+            conf.league_average[league_key]['SO']) +
         ((bat_probs['OUT'] * pit_probs['OUT']) /
-            conf.league_totals['PROBS']['OUT'])
+            conf.league_average[league_key]['OUT'])
     )
     ran = r.rand()
     out_prob = ((bat_probs['OUT'] * pit_probs['OUT']) /
-                conf.league_totals['PROBS']['OUT']) / outcome_den
-    if ran < out_prob:
-        return 'OUT'
+                conf.league_average[league_key]['OUT']) / outcome_den
+    try:
+        if ran < out_prob:
+            return 'OUT'
+    except:
+        pdb.set_trace()
     so_prob = ((bat_probs['SO'] * pit_probs['SO']) /
-               conf.league_totals['PROBS']['SO']) / outcome_den
+               conf.league_average[league_key]['SO']) / outcome_den
     if ran >= out_prob and ran < out_prob + so_prob:
         return 'SO'
     cumul = out_prob + so_prob
     single_prob = ((bat_probs['1B'] * pit_probs['1B']) /
-                   conf.league_totals['PROBS']['1B']) / outcome_den
+                   conf.league_average[league_key]['1B']) / outcome_den
     if ran >= cumul and ran < cumul + single_prob:
         return '1B'
     double_prob = ((bat_probs['2B'] * pit_probs['2B']) /
-                   conf.league_totals['PROBS']['2B']) / outcome_den
+                   conf.league_average[league_key]['2B']) / outcome_den
     cumul += single_prob
     if ran >= cumul and ran < cumul + double_prob:
         return '2B'
     triple_prob = ((bat_probs['3B'] * pit_probs['3B']) /
-                   conf.league_totals['PROBS']['3B']) / outcome_den
+                   conf.league_average[league_key]['3B']) / outcome_den
     cumul += double_prob
     if ran >= cumul and ran < cumul + triple_prob:
         return '3B'
     hr_prob = ((bat_probs['HR'] * pit_probs['HR']) /
-               conf.league_totals['PROBS']['HR']) / outcome_den
+               conf.league_average[league_key]['HR']) / outcome_den
     cumul += triple_prob
     if ran >= cumul and ran < cumul + hr_prob:
         return 'HR'
     bb_prob = ((bat_probs['BB'] * pit_probs['BB']) /
-               conf.league_totals['PROBS']['BB']) / outcome_den
+               conf.league_average[league_key]['BB']) / outcome_den
     cumul += hr_prob
     if ran >= cumul and ran < cumul + bb_prob:
         return 'BB'

@@ -21,6 +21,7 @@ class Team(object):
         self.pitcher = Pitcher(pitcher_name)
         self.starting_pitcher = self.pitcher
         self.bullpen = brs.load_team_bullpen(team_name)
+        self.stored_relievers = []
         for idx, player_name in enumerate(self.batting_order):
             self.batting_order[idx] = Player(util.standardize_player_name(str(player_name)))
 
@@ -39,6 +40,8 @@ class Team(object):
     def start_new_game(self):
         for player in self.batting_order:
             player.start_new_game()
+        for p in self.stored_relievers:
+            p.start_new_game()
         if self.pitcher == self.starting_pitcher:
             self.starting_pitcher.start_new_game()
         else:
@@ -78,11 +81,17 @@ class Team(object):
             ip_count.append(int(bp_dict['IP'][p]))
         new_pit = pot_pitchers[ip_count.index(max(ip_count))]
         # pit is the name of the pitcher to be replaced
-        new_pitcher = Pitcher(new_pit)
+        stored_names = [x.get_name() for x in self.stored_relievers]
+        if new_pit in stored_names:
+            new_pitcher = self.stored_relievers[stored_names.index(new_pit)]
+        else:
+            new_pitcher = Pitcher(new_pit)
         if self.pitcher in self.batting_order:
             bat_idx = self.batting_order.index(self.pitcher)
             self.batting_order[bat_idx] = new_pitcher
         self.pitcher = new_pitcher
+        if new_pitcher not in self.stored_relievers:
+            self.stored_relievers.append(new_pitcher)
 
     def _retrieve_projected_batting_order(self, name):
         if conf.batting_orders is None:

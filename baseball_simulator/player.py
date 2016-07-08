@@ -13,15 +13,6 @@ class Player(object):
         """Initialization function."""
         self.game_logs = None
         self.name = u.standardize_player_name(name)
-        self.mlb_id = dl.get_player_mlb_id(self.name)
-        self.bat_handedness = self._load_batting_handedness()
-        conf.player_id_map.at[self.name, 'bats']
-        self.handedness_batting_stats = self._load_handedness_batting_stats()
-        # DEFAULT TO LEAGUE AVERAGE: FIX TO LOWER THRESHOLD
-        if self.handedness_batting_stats is None:
-            self.handedness_batting_stats = {}
-            self.handedness_batting_stats['vR'] = conf.league_totals['PROBS']
-            self.handedness_batting_stats['vL'] = conf.league_totals['PROBS']
         self.bat_stats = {
             'SO': 0,
             'BB': 0,
@@ -36,6 +27,24 @@ class Player(object):
             'SB': 0
         }
         self.game_history = []
+        try:
+            self.mlb_id = dl.get_player_mlb_id(self.name)
+        except:
+            self.mlb_id = None
+            self.bat_handedness = 'R'
+            return
+        self.bat_handedness = self._load_batting_handedness()
+        self.handedness_batting_stats = self._load_handedness_batting_stats()
+        self.sb_stats = self._load_stolen_base_stats()
+        # DEFAULT TO LEAGUE AVERAGE: FIX TO LOWER THRESHOLD
+        if self.handedness_batting_stats is None:
+            self.handedness_batting_stats = {}
+            self.handedness_batting_stats['vR'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['vL'] = conf.league_totals['PROBS']
+            self.sb_stats = {}
+            self.sb_stats['steal'] = 0
+            self.sb_stats['success'] = 0
+            self.sb_stats['cs'] = 0
 
     def get_handed_batting_probs(self, opp_handedness):
         """Return probabilities of batting outcomes."""
@@ -45,8 +54,11 @@ class Player(object):
             return self.handedness_batting_stats['vL']
 
     def _load_batting_handedness(self):
-        return conf.player_id_map[
-            conf.player_id_map.mlb_id == self.mlb_id]['bats'][0]
+        try:
+            return conf.player_id_map[
+                conf.player_id_map.mlb_id == self.mlb_id]['bats'][0]
+        except:
+            return 'R'
 
     def start_new_game(self):
         self.game_history.append(self.bat_stats)
@@ -75,12 +87,24 @@ class Player(object):
             except:
                 ha = brs.load_handed_probabilities(
                     self.name, pit_or_bat='b')
+                if ha is None:
+                    return conf.below_avg_batting_probs
             return ha
 
     def get_batting_handedness(self):
         """Return the handedness of the batter."""
         return self.bat_handedness
 
+    def get_stolen_base_chance(self):
+        return self.sb_stats
+
+    def _load_stolen_base_stats(self):
+        try:
+            sb = dl.load_steamer_stolen_base_stats(self.mlb_id)
+        except:
+            return {'steal': 0, 'success': 0, 'cs': 0}
+        return sb
+    
     def get_name(self):
         """Return name of batter."""
         return self.name
@@ -128,3 +152,7 @@ class Player(object):
     def add_bb(self):
         """Add a walk from the simulated game."""
         self.bat_stats['BB'] += 1
+
+    def add_sb(self):
+        """Add a walk from the simulated game."""
+        self.bat_stats['SB'] += 1

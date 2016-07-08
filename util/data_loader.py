@@ -44,6 +44,15 @@ def load_player_id_map():
     return pd.read_csv(conf.id_map_path, index_col=1)
 
 
+def get_player_name_from_id(mlb_id):
+    """Get the mlb player id of a given player."""
+    util.check_load_player_id_map()
+    name = conf.player_id_map.iloc[
+        np.where(
+            conf.player_id_map['mlb_id'].values == mlb_id)[0][0]].name
+    return name
+
+
 def get_player_mlb_id(name):
     """Get the mlb player id of a given player."""
     util.check_load_player_id_map()
@@ -75,7 +84,10 @@ def load_steamer_handed_probabilities(play_id, pit_or_bat='b'):
     if pit_or_bat == 'b' and conf.steamer_batter_data is None:
         conf.steamer_batter_data = load_steamer_batter_projections()
     elif pit_or_bat == 'p' and conf.steamer_pitcher_data is None:
-        conf.steamer_pitcher_data = load_steamer_pitcher_projections()
+        if conf.steamer_pitcher_approach == 'ros':
+            conf.steamer_pitcher_data, conf.steamer_preseason_splits = load_steamer_pitcher_projections()
+        elif conf.steamer_pitcher_approach == 'preseason':
+            conf.steamer_pitcher_data = load_steamer_pitcher_projections()
     probs = {'overall': {}, 'vL': {}, 'vR': {}}
     if pit_or_bat == 'b':
         counts = {'overall': {}, 'vL': {}, 'vR': {}}
@@ -120,38 +132,101 @@ def load_steamer_handed_probabilities(play_id, pit_or_bat='b'):
                  counts[key]['3B'] + counts[key]['HR'] + counts[key]['BB'] +
                  counts[key]['SO'] + counts[key]['HBP'])) / counts[key]['PA']
     elif pit_or_bat == 'p':
-        split = conf.steamer_pitcher_data.at[play_id, 'split']
-        sing = conf.steamer_pitcher_data.at[play_id, '1B/PA']
-        doub = conf.steamer_pitcher_data.at[play_id, '2B/PA']
-        trip = conf.steamer_pitcher_data.at[play_id, '3B/PA']
-        hr = conf.steamer_pitcher_data.at[play_id, 'HR/PA']
-        bb = conf.steamer_pitcher_data.at[play_id, 'BB/PA']
-        so = conf.steamer_pitcher_data.at[play_id, 'SO/PA']
-        hbp = conf.steamer_pitcher_data.at[play_id, 'HBP/PA']
-        for idx, val in enumerate(split):
-            if val == 'total':
-                val = 'overall'
-            if '1B' in probs[val]:
-                probs[val]['1B'] = np.mean([probs[val]['1B'], sing[idx]])
-                probs[val]['2B'] = np.mean([probs[val]['2B'], doub[idx]])
-                probs[val]['3B'] = np.mean([probs[val]['3B'], trip[idx]])
-                probs[val]['HR'] = np.mean([probs[val]['HR'], hr[idx]])
-                probs[val]['BB'] = np.mean([probs[val]['BB'], bb[idx]])
-                probs[val]['SO'] = np.mean([probs[val]['SO'], so[idx]])
-                probs[val]['HBP'] = np.mean([probs[val]['HBP'], hbp[idx]])
-                probs[val]['OUT'] = 1 - np.sum(
-                    [probs[val]['1B'], probs[val]['2B'], probs[val]['3B'],
-                     probs[val]['HR'], probs[val]['BB'], probs[val]['SO'],
-                     probs[val]['HBP']])
+        if conf.steamer_pitcher_approach == 'ros':
+            player_name = get_player_name_from_id(play_id)
+            if type(conf.steamer_pitcher_data.at[player_name, 'IP']) == np.ndarray:
+                total_outs = (conf.steamer_pitcher_data.at[player_name, 'IP'][0] * 3.0)
+                hits = (conf.steamer_pitcher_data.at[player_name, 'H'][0] -
+                        conf.steamer_pitcher_data.at[player_name, 'HR'][0])
+                so = conf.steamer_pitcher_data.at[player_name, 'SO'][0]
+                bb = conf.steamer_pitcher_data.at[player_name, 'BB'][0]
+                hr = conf.steamer_pitcher_data.at[player_name, 'HR'][0]
             else:
-                probs[val]['1B'] = sing[idx]
-                probs[val]['2B'] = doub[idx]
-                probs[val]['3B'] = trip[idx]
-                probs[val]['HR'] = hr[idx]
-                probs[val]['BB'] = bb[idx]
-                probs[val]['SO'] = so[idx]
-                probs[val]['HBP'] = hbp[idx]
+                total_outs = (conf.steamer_pitcher_data.at[player_name, 'IP'] * 3.0)
+                hits = (conf.steamer_pitcher_data.at[player_name, 'H'] -
+                        conf.steamer_pitcher_data.at[player_name, 'HR'])
+                so = conf.steamer_pitcher_data.at[player_name, 'SO']
+                bb = conf.steamer_pitcher_data.at[player_name, 'BB']
+                hr = conf.steamer_pitcher_data.at[player_name, 'HR']
+            pa = total_outs + hits + bb + hr
+            # calculate general probs
+            so_prob = so / pa
+            out_prob = (total_outs - so) / pa
+            hit_prob = hits / pa
+            hr_prob = hr / pa
+            bb_prob = bb / pa
+            # find proportions of hits for a given pitcher so we know how to divide up their hit counts
+            total_prop = conf.steamer_preseason_splits.at[play_id, '1B/PA'][0] + conf.steamer_preseason_splits.at[play_id, '2B/PA'][0] + conf.steamer_preseason_splits.at[play_id, '3B/PA'][0]
+            single_proportion = conf.steamer_preseason_splits.at[play_id, '1B/PA'][0] / total_prop
+            double_proportion = conf.steamer_preseason_splits.at[play_id, '2B/PA'][0] / total_prop
+            triple_proportion = conf.steamer_preseason_splits.at[play_id, '3B/PA'][0] / total_prop
+            # now find actual probabilities of single, double, triple
+            single_prob = hit_prob * single_proportion
+            double_prob = hit_prob * double_proportion
+            triple_prob = hit_prob * triple_proportion
+            if type(single_prob) == np.ndarray:
+                pdb.set_trace()
+                player_name = player_name[0]
+            final_probs = {
+                '1B': single_prob,
+                '2B': double_prob,
+                '3B': triple_prob,
+                'HR': hr_prob,
+                'BB': bb_prob,
+                'SO': so_prob,
+                'OUT': out_prob,
+                'HBP': 0.0
+            }
+            probs['vL'] = final_probs.copy()
+            probs['vR'] = final_probs.copy()
+            probs['overall'] = final_probs.copy()
+        elif conf.steamer_pitcher_approach == 'preseason':
+            split = conf.steamer_pitcher_data.at[play_id, 'split']
+            sing = conf.steamer_pitcher_data.at[play_id, '1B/PA']
+            doub = conf.steamer_pitcher_data.at[play_id, '2B/PA']
+            trip = conf.steamer_pitcher_data.at[play_id, '3B/PA']
+            hr = conf.steamer_pitcher_data.at[play_id, 'HR/PA']
+            bb = conf.steamer_pitcher_data.at[play_id, 'BB/PA']
+            so = conf.steamer_pitcher_data.at[play_id, 'SO/PA']
+            hbp = conf.steamer_pitcher_data.at[play_id, 'HBP/PA']
+            for idx, val in enumerate(split):
+                if val == 'total':
+                    val = 'overall'
+                if '1B' in probs[val]:
+                    probs[val]['1B'] = np.mean([probs[val]['1B'], sing[idx]])
+                    probs[val]['2B'] = np.mean([probs[val]['2B'], doub[idx]])
+                    probs[val]['3B'] = np.mean([probs[val]['3B'], trip[idx]])
+                    probs[val]['HR'] = np.mean([probs[val]['HR'], hr[idx]])
+                    probs[val]['BB'] = np.mean([probs[val]['BB'], bb[idx]])
+                    probs[val]['SO'] = np.mean([probs[val]['SO'], so[idx]])
+                    probs[val]['HBP'] = np.mean([probs[val]['HBP'], hbp[idx]])
+                    probs[val]['OUT'] = 1 - np.sum(
+                        [probs[val]['1B'], probs[val]['2B'], probs[val]['3B'],
+                         probs[val]['HR'], probs[val]['BB'], probs[val]['SO'],
+                         probs[val]['HBP']])
+                else:
+                    probs[val]['1B'] = sing[idx]
+                    probs[val]['2B'] = doub[idx]
+                    probs[val]['3B'] = trip[idx]
+                    probs[val]['HR'] = hr[idx]
+                    probs[val]['BB'] = bb[idx]
+                    probs[val]['SO'] = so[idx]
+                    probs[val]['HBP'] = hbp[idx]
     return probs
+
+
+def load_steamer_stolen_base_stats(play_id):
+    if conf.steamer_batter_data is None:
+        conf.steamer_batter_data = load_steamer_batter_projections()
+    stats = {}
+    # get plate appearances and multiply by OBP to get approximate steal opps.
+    # Assume players will average 3 chances to steal per ob
+    on_base_count = (conf.steamer_batter_data.at[play_id, 'PA'][0] * conf.steamer_batter_data.at[play_id, 'OBP'][0])
+    total_attempts = (conf.steamer_batter_data.at[play_id, 'SB'][0] + conf.steamer_batter_data.at[play_id, 'CS'][0]) / 4
+    stats['steal'] = total_attempts / on_base_count
+    stats['success'] = conf.steamer_batter_data.at[play_id, 'SB'][0] / total_attempts
+    stats['cs'] = conf.steamer_batter_data.at[play_id, 'CS'][0] / total_attempts
+    return stats
 
 
 def load_steamer_batter_projections():
@@ -161,8 +236,13 @@ def load_steamer_batter_projections():
 
 
 def load_steamer_pitcher_projections():
-    df = pd.read_csv(conf.steamer_preseason_split_pit_path, index_col=5)
-    return df
+    if conf.steamer_pitcher_approach == 'preseason':
+        df = pd.read_csv(conf.steamer_preseason_split_pit_path, index_col=5)
+        return df
+    elif conf.steamer_pitcher_approach == 'ros':
+        df = pd.read_csv(conf.steamer_ros_pit_path, index_col=0)
+        df2 = pd.read_csv(conf.steamer_preseason_split_pit_path, index_col=5)
+        return df, df2
 
 # def load_handedness_data(pit_or_bat='b'):
 #     if pit_or_bat == 'p':

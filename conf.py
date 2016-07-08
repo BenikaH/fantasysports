@@ -1,6 +1,68 @@
 """Configuration file."""
 import os
 
+
+
+"""
+Original genetic settings:
+"""
+genetic_generations = 60
+retain = 0.35
+random_select = 0.05
+mutate_chance = 0.015
+population_size = 1000
+
+# how to sort the results: can be 'cost', 'points', 'cost-points',
+# 'cost-fitness', 'fitness'
+sort_by = 'cost-fitness'
+
+
+"""MLB-specific Genetic Settings"""
+self_defeating_weight = 1.0
+same_team_bonus_weight = 2.0
+excluded_pitchers = []
+excluded_batters = []
+use_inclusion = False
+included_teams = [
+    'DET', 'TOR', 'WAS', 'NYM', 'NYY', 'CLE', 'ATL', 'CHC', 'MIN', 'TEX',
+    'OAK', 'HOU', 'SEA', 'KCR', 'PHI', 'COL', 'SDP', 'LAD']
+excluded_teams = []
+favored_teams = []
+# genetic algorithm settings for simple gen
+# approach: can be 'mean' or 'profitability'
+genetic_approach = 'mean'
+profitable_cutoff = 180
+# DEPRECATED OPTIONS
+favored_team_bonus = 2.0
+use_stack_bonus = False
+stack_bonus = 7.0
+use_batting_orders = True
+min_different_teams = 3
+
+"""Projection Generation Settings"""
+# 'fanduel' or 'draftkings'
+site = 'fanduel'
+projection_date = 'today'
+# number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
+simulated_game_count = 3000
+optimizer_game_count = 3000
+# 1 -> 1000, 2 -> 3000
+proj_iteration = 'main'
+proj_use_inclusion = False
+proj_included_teams = [
+    'DET', 'TOR', 'WAS', 'NYM', 'NYY', 'CLE', 'ATL', 'CHC', 'MIN', 'TEX',
+    'OAK', 'HOU', 'SEA', 'KCR', 'PHI', 'COL', 'SDP', 'LAD']
+# source of handedness projections (steamers or bbref)
+handedness_source = 'steamer'
+
+
+"""Modeling Settings"""
+model_iteration = 3
+# 3 -> 1 - 1 model
+used_pitcher_model_name = 'pitcher_sub_model_3.pkl'
+pitcher_neg_samples = 1
+pitcher_total_samples = 3000
+
 """Local Paths"""
 chromedriver_path = './chromedriver'
 root_path = os.path.dirname(os.path.abspath(__file__))
@@ -14,34 +76,11 @@ models_path = './models/'
 retrosheet_path = './data/retrosheet/'
 # id_map_path = './data/player_id_map.csv'
 id_map_path = 'http://crunchtimebaseball.com/master.csv'
+# steamer pitcher approach -> preseason or rest of season
+steamer_pitcher_approach = 'ros'
 steamer_preseason_split_pit_path =\
     './data/steamer_projections_pitchers_preseason.csv'
-
-
-"""Modeling Settings"""
-model_iteration = 3
-# 3 -> 1 - 1 model
-used_pitcher_model_name = 'pitcher_sub_model_3.pkl'
-pitcher_neg_samples = 1
-pitcher_total_samples = 3000
-
-"""Projection Generation Settings"""
-projection_date = 'June 29, 2016'
-# number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
-simulated_game_count = 500
-proj_iteration = 1
-# source of handedness projections (steamers or bbref)
-handedness_source = 'steamer'
-# genetic algorithm settings for simple gen
-# approach: can be 'mean' or 'profitability'
-genetic_approach = 'mean'
-profitable_cutoff = 190
-
-
-# 'fanduel' or 'draftkings'
-site = 'fanduel'
-include_numberfire = False
-
+steamer_ros_pit_path = './data/pitchers_ros.csv'
 
 """Web Paths"""
 rotogrinder_hitter_path =\
@@ -55,42 +94,13 @@ steamer_ros_split_bat_path = 'http://steamerprojections.com/hitters_ros_split.ph
 
 """General Genetic Settings"""
 """
-genetic_generations = 80 # used to be 1000
+genetic_generations = 1000 # used to be 1000
 retain = .6
 random_select = .07
 mutate_chance = 0.05
 population_size = 200
 """
 
-
-"""
-Original genetic settings:
-"""
-genetic_generations = 50
-retain = 0.35
-random_select = 0.05
-mutate_chance = 0.015
-population_size = 1000
-
-# how to sort the results: can be 'cost', 'points', 'cost-points',
-# 'cost-fitness', 'fitness'
-sort_by = 'fitness'
-
-
-"""MLB-specific Genetic Settings"""
-self_defeating_weight = 3.0
-same_team_bonus_weight = 2.0
-favored_team_bonus = 2.0
-use_stack_bonus = False
-stack_bonus = 7.0
-use_batting_orders = True
-min_different_teams = 3
-excluded_pitchers = []
-excluded_batters = []
-use_inclusion = False
-included_teams = []
-excluded_teams = ['BOS', 'TBR', 'MIA', 'DET', 'CHC', 'CIN', 'TOR', 'COL', 'HOU', 'LAA', 'BAL', 'SDP', 'PHI', 'ARI']
-favored_teams = []
 
 """NBA-specific Genetic Settings"""
 excluded_nba_players = []
@@ -122,6 +132,7 @@ field_factors = None
 pitcher_sub_model = None
 steamer_batter_data = None
 steamer_pitcher_data = None
+steamer_preseason_splits = None
 
 short_to_long_names = {
     'BAL': 'Baltimore',
@@ -193,6 +204,7 @@ long_to_short_names = {
     'Tigers': 'DET',
     'Kansas City': 'KCR',
     'Royals': 'KCR',
+    'Chicago White Sox': 'CWS',
     'Chi White Sox': 'CWS',
     'White Sox': 'CWS',
     'Minnesota': 'MIN',
@@ -312,65 +324,60 @@ team_list = [
 ]
 
 # http://www.baseball-reference.com/leagues/MLB/2014.shtml
-league_totals = {
-    '2013': {
-        '1B': 28438.0,
-        '2B': 8222.0,
-        '3B': 772.0,
-        'HR': 4661.0,
-        'BB': 14640.0,
-        'SO': 36710.0,
-        'HBP': 1536.0,
-        'OUT': 89894.0,
-        'PA': 184873.0
+league_average = {
+    # BATvPIT
+    'RvR': {
+        'SO': 0.1880,
+        '1B': 0.1570,
+        '2B': 0.0459,
+        '3B': 0.0039,
+        'HR': 0.0269,
+        'BB': 0.0707,
+        'HBP': 0.0119,
+        'OUT': 0.4957
     },
-    '2014': {
-        '1B': 28423.0,
-        '2B': 8137.0,
-        '3B': 849.0,
-        'HR': 4186.0,
-        'BB': 14020.0,
-        'SO': 37441.0,
-        'HBP': 1652.0,
-        'OUT': 89221.0,
-        'PA': 183929.0
+    'RvL': {
+        'SO': 0.1677,
+        '1B': 0.1577,
+        '2B': 0.0510,
+        '3B': 0.0042,
+        'HR': 0.0285,
+        'BB': 0.0918,
+        'HBP': 0.0068,
+        'OUT': 0.4924
     },
-    '2015': {
-        '1B': 28016.0,
-        '2B': 8242.0,
-        '3B': 939.0,
-        'HR': 4909.0,
-        'BB': 14073.0,
-        'SO': 37446.0,
-        'HBP': 1602.0,
-        'OUT': 88401.0,
-        'PA': 183628.0
+    'LvL': {
+        'SO': 0.2137,
+        '1B': 0.1527,
+        '2B': 0.0405,
+        '3B': 0.0049,
+        'HR': 0.0227,
+        'BB': 0.0795,
+        'HBP': 0.0130,
+        'OUT': 0.4730
     },
-    'OVERALL': {
-        'PA': 552430.0,
-        'BB': 42733.0,
-        'HR': 13756.0,
-        '1B': 84877.0,
-        'SO': 111597.0,
-        '2B': 24601.0,
-        '3B': 2560.0,
-        'HBP': 4790.0,
-        'OUT': 267516.0
-    },
-    'PROBS': {
-        'BB': 0.077355,
-        'HR': 0.024901,
-        'SO': 0.202011,
-        '2B': 0.044532,
-        '1B': 0.153642,
-        '3B': 0.004634,
-        'HBP': 0.008671,
-        'OUT': 0.484253
+    'LvR': {
+        'SO': 0.1718,
+        '1B': 0.1569,
+        '2B': 0.0482,
+        '3B': 0.0063,
+        'HR': 0.0272,
+        'BB': 0.0977,
+        'HBP': 0.0066,
+        'OUT': 0.4853
     }
 }
 
+# from http://www.baseball-reference.com/leagues/MLB/2015-baserunning-batting.shtml
+baserunning_avg = {
+    # starting base, hit type, ending base
+    '1S3': .27649510,
+    '2SH': .57425549,
+    '1DH': .43340206
+}
+
 below_avg_batting_probs = {
-    'LHP': {
+    'vL': {
         'OUT': .50,
         '1B': .105,
         '2B': .03,
@@ -380,7 +387,7 @@ below_avg_batting_probs = {
         'SO': .25,
         'HBP': .001
     },
-    'RHP': {
+    'vR': {
         'OUT': .50,
         '1B': .105,
         '2B': .03,

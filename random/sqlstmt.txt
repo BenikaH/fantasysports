@@ -69,3 +69,9 @@ CREATE TABLE starting_pitcher_hist SELECT A.game_id, A.INN_CT as last_inn, A.sub
   ) as A
 INNER JOIN events as ev on ev.GAME_ID = A.GAME_ID
 WHERE ((A.SUB_HOME_ID = 0 AND ev.bat_home_id = 1) OR (A.SUB_HOME_ID = 1 AND ev.bat_home_id = 0) AND A.INN_CT >= ev.inn_ct AND ev.pit_id = A.removed_id);
+
+
+-- LEAGUE AVERAGE FOR BATTER-PITCHER MATCHUP
+SELECT COUNT(*) as PA, (SUM(event_cd=3) / COUNT(*)) as SO, (SUM(event_cd=20) / COUNT(*)) as 1B, (SUM(event_cd=21) / COUNT(*)) as 2B, (SUM(event_cd=22) / COUNT(*)) as 3B, (SUM(event_cd=23) / COUNT(*)) as HR, (SUM(event_cd=14) + SUM(event_cd=15)) / COUNT(*) as BB, (SUM(event_cd=16) / COUNT(*)) as HBP, ((SUM(event_cd=2) + SUM(event_cd=19)) / COUNT(*)) as 'OUT' FROM events WHERE BAT_HAND_CD='R' AND PIT_HAND_CD='R' AND EVENT_CD not in (4,5,6,8,9,10,11, 12, 13,17,18,19);
+
+

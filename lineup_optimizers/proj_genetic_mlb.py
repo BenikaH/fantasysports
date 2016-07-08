@@ -179,7 +179,7 @@ class GeneticMLB(object):
                 salary = self.get_team_salary(team)
                 if salary > self.max_salary or self._has_duplicate_players(team):
                     return 0
-                return points
+                return points - self._playing_against_self(team)
             else:
                 raise ValueError('Please specify "profitability" or "mean"')
 
@@ -190,6 +190,18 @@ class GeneticMLB(object):
                 count += 1
         return count
 
+    def _playing_against_self(self, team):
+        'Returns a negative weight for conflicting teams'
+        # gets a flattened set of the teams on our team
+        primary_teams = set([this_team for t in [[
+            x['team'] for x in team[item]] for item in team]
+            for this_team in t])
+        primary_opponents = set([that_team for t in [[
+            x['opp_team'] for x in team[item]] for item in team]
+            for that_team in t])
+        conflict_instances = len(primary_teams.intersection(primary_opponents))
+        return conflict_instances * conf.self_defeating_weight
+
     def _get_team_point_total(self, team, simulation_idx):
         total_points = 0
         for pos, players in team.iteritems():
@@ -197,11 +209,11 @@ class GeneticMLB(object):
                 total_points += player[simulation_idx]
         return total_points
 
-    def _get_team_mean_point_total(self, team):
+    def get_team_mean_point_total(self, team):
         total_points = 0
         for pos, players in team.iteritems():
             for player in players:
-                total_points += player[simulation_idx]
+                total_points += player['mean']
         return total_points
 
     ####################

@@ -271,8 +271,8 @@ def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'
                          (idm[player_name], year, pit_or_bat),
                          preload_content=False)
     else:
-        pdb.set_trace()
-        raise ValueError("Player %s not found in Baseball Reference." % player_name)
+        print "Player %s not found in Baseball Reference." % player_name
+        return None
     soup = BeautifulSoup(r.data, 'html5lib')
     if soup.find(id='plato'):
         player_split_data = soup.find(id='plato').find_all('tr')
@@ -495,8 +495,7 @@ def load_team_bullpen(team_name):
     col_headers = None
     r = http.urlopen(
         'GET', 'http://rotochamp.com/baseball/TeamPage.aspx?TeamID=%s' %
-        team_name,
-        preload_content=False)
+        team_name)
     soup = BeautifulSoup(r.data, 'html5lib')
     order = soup.find(id='MainContent_gridBullpen').find_all('tr')
     names = []

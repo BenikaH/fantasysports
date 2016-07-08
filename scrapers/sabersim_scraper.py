@@ -1,6 +1,7 @@
 """Extracts sabersim data from sabersim.com."""
 from selenium import webdriver
 from bs4 import BeautifulSoup
+from util.util import standardize_player_name
 import time
 import urllib3
 import conf
@@ -25,7 +26,7 @@ def get_saber_sim_projections_from_fangraphs():
         while idx < len(player_info):
             batter_data.append(player_info[idx: idx + 19])
             idx += 19
-    batter_names = [batter[0] for batter in batter_data]
+    batter_names = [standardize_player_name(batter[0]) for batter in batter_data]
     batter_data = [batter[1:] for batter in batter_data]
     batter_data_frame =\
         pd.DataFrame(batter_data, index=batter_names, columns=
@@ -47,7 +48,7 @@ def get_saber_sim_projections_from_fangraphs():
         while idx < len(pitcher_info):
             pitcher_data.append(pitcher_info[idx: idx + 16])
             idx += 16
-    pitcher_names = [pitcher[0] for pitcher in pitcher_data]
+    pitcher_names = [standardize_player_name(pitcher[0]) for pitcher in pitcher_data]
     pitcher_data = [pitcher[1:] for pitcher in pitcher_data]
     pitcher_data_frame =\
         pd.DataFrame(pitcher_data, index=pitcher_names, columns=
