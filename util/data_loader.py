@@ -9,7 +9,6 @@ import numpy as np
 import conf
 import pdb
 
-
 def load_mlb_schedule():
     sch = open(conf.schedule_path)
     data = csv.reader(sch)

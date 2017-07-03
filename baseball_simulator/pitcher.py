@@ -55,6 +55,7 @@ class Pitcher(Player):
             try:
                 ha = dl.load_steamer_handed_probabilities(self.mlb_id, pit_or_bat='p')
             except:
+                print "Exception when loading steamer probabilities for pitcher.  Defaulting to baseball ref."
                 ha = brs.load_handed_probabilities(
                     self.name, pit_or_bat='p')
             return ha
@@ -76,8 +77,7 @@ class Pitcher(Player):
 
     def get_pitching_handedness(self):
         """Return the handedness of the pitcher."""
-        return conf.player_id_map[
-            conf.player_id_map.mlb_id == self.mlb_id]['throws'][0]
+        return self.pit_handedness
 
     def add_batter_faced(self):
         self.pitch_stats['PA'] += 1

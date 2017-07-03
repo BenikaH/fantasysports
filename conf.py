@@ -1,16 +1,23 @@
 """Configuration file."""
 import os
 
-
+"""General Genetic Settings"""
+genetic_generations = 1000 # used to be 1000
+retain = .6
+random_select = .07
+mutate_chance = 0.05
+population_size = 200
 
 """
 Original genetic settings:
+"""
 """
 genetic_generations = 60
 retain = 0.35
 random_select = 0.05
 mutate_chance = 0.015
 population_size = 1000
+"""
 
 # how to sort the results: can be 'cost', 'points', 'cost-points',
 # 'cost-fitness', 'fitness'
@@ -23,9 +30,7 @@ same_team_bonus_weight = 2.0
 excluded_pitchers = []
 excluded_batters = []
 use_inclusion = False
-included_teams = [
-    'DET', 'TOR', 'WAS', 'NYM', 'NYY', 'CLE', 'ATL', 'CHC', 'MIN', 'TEX',
-    'OAK', 'HOU', 'SEA', 'KCR', 'PHI', 'COL', 'SDP', 'LAD']
+included_teams = []
 excluded_teams = []
 favored_teams = []
 # genetic algorithm settings for simple gen
@@ -42,16 +47,14 @@ min_different_teams = 3
 """Projection Generation Settings"""
 # 'fanduel' or 'draftkings'
 site = 'fanduel'
-projection_date = 'today'
+projection_date = 'July 8, 2016'
 # number of games to simulate.  For an 8 game list, 2000 -> 9 minutes
 simulated_game_count = 3000
 optimizer_game_count = 3000
 # 1 -> 1000, 2 -> 3000
 proj_iteration = 'main'
 proj_use_inclusion = False
-proj_included_teams = [
-    'DET', 'TOR', 'WAS', 'NYM', 'NYY', 'CLE', 'ATL', 'CHC', 'MIN', 'TEX',
-    'OAK', 'HOU', 'SEA', 'KCR', 'PHI', 'COL', 'SDP', 'LAD']
+proj_included_teams = ["MIL", "ARI", "CHC", "OAK", "LAA", "SEA", "BOS", "LAD", "PHI", "SDP"]
 # source of handedness projections (steamers or bbref)
 handedness_source = 'steamer'
 
@@ -67,7 +70,7 @@ pitcher_total_samples = 3000
 chromedriver_path = './chromedriver'
 root_path = os.path.dirname(os.path.abspath(__file__))
 cache_path = os.path.join(root_path, 'cache')
-schedule_path = './data/schedule2016.txt'
+schedule_path = './data/schedule2017.txt'
 batter_handedness_path = './data/batter_handedness.csv'
 pitcher_handedness_path = './data/pitcher_handedness.csv'
 field_factors_path = './data/field_factors.csv'
@@ -91,15 +94,6 @@ rotogrinder_nba_path =\
     'http://rotogrinders.com/projected-stats/nba-player.csv?site=%s' % site
 steamer_ros_split_bat_path = 'http://steamerprojections.com/hitters_ros_split.php'
 
-
-"""General Genetic Settings"""
-"""
-genetic_generations = 1000 # used to be 1000
-retain = .6
-random_select = .07
-mutate_chance = 0.05
-population_size = 200
-"""
 
 
 """NBA-specific Genetic Settings"""
@@ -413,5 +407,6 @@ known_player_conversions = {
     'Thomas Pham': 'Tommy Pham',
     'Michael Fiers': 'Mike Fiers',
     'Matthew Szczur': 'Matt Szczur',
-    'Seung Hwan Oh': 'Seung-hwan Oh'
+    'Seung Hwan Oh': 'Seung-hwan Oh',
+    'Louis Voit': 'Luke Voit'
 }

@@ -39,8 +39,8 @@ class Player(object):
         # DEFAULT TO LEAGUE AVERAGE: FIX TO LOWER THRESHOLD
         if self.handedness_batting_stats is None:
             self.handedness_batting_stats = {}
-            self.handedness_batting_stats['vR'] = conf.league_totals['PROBS']
-            self.handedness_batting_stats['vL'] = conf.league_totals['PROBS']
+            self.handedness_batting_stats['vR'] = conf.league_average['RvR']
+            self.handedness_batting_stats['vL'] = conf.league_average['RvL']
             self.sb_stats = {}
             self.sb_stats['steal'] = 0
             self.sb_stats['success'] = 0
@@ -51,7 +51,10 @@ class Player(object):
         if opp_handedness == 'R':
             return self.handedness_batting_stats['vR']
         else:
-            return self.handedness_batting_stats['vL']
+            try:
+                return self.handedness_batting_stats['vL']
+            except:
+                print self.__dict__
 
     def _load_batting_handedness(self):
         try:

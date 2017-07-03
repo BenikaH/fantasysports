@@ -1,9 +1,7 @@
 """Handles all scraping of baseball ref."""
 from __future__ import division
-import sys
 from util.cache import cache_disk
 from bs4 import BeautifulSoup
-from string import ascii_lowercase
 import urllib3
 import conf
 import pandas as pd
@@ -15,39 +13,7 @@ import re
 # PLAYER FUNCTIONS #
 ####################
 
-
-@cache_disk()
-def retrieve_player_id_map():
-    """Retrieve and cache the links to each player's page."""
-    http = urllib3.PoolManager()
-    player_id_map = {}
-    for char in ascii_lowercase:
-        r = http.urlopen(
-            'GET', 'http://www.baseball-reference.com/players/%s/' % char,
-            preload_content=False)
-        soup = BeautifulSoup(r.data, 'html5lib')
-        for block in soup.find_all('blockquote'):
-            bolds = block.find_all('b')
-            if len(bolds) > 0:
-                for b in bolds:
-                    try:
-                        link = b.a.get('href')
-                        link = re.sub(r'/players\/[a-z]\/', '', link)
-                        link = link.replace('.shtml', '')
-                    except:
-                        pdb.set_trace()
-                    player_id_map[b.a.get_text()] = link
-    player_id_map['Tyrell Jenkins'] = 'jenkin001tyr'
-    player_id_map['A.J. Reed'] = 'reed--000and'
-    player_id_map['Dillon Overton'] = 'overto001dil'
-    player_id_map['Joel De La Cruz'] = 'delacr002joe'
-    player_id_map['Brock Stewart'] = 'stewar001bro'
-    player_id_map['Kevin Gausman'] = 'gausmke01'
-    return player_id_map
-
-
 def get_player_handedness(player_name):
-    u.check_load_player_id_map()
     http = urllib3.PoolManager()
     r = http.urlopen(
             'GET',
@@ -67,7 +33,7 @@ def get_player_handedness(player_name):
 
 
 @cache_disk()
-def load_handed_probabilities(player_name, start_year='2015', end_year='2016', pit_or_bat='b'):
+def load_handed_probabilities(player_name, start_year='2016', end_year='2017', pit_or_bat='b'):
     ha = load_historical_player_handedness(player_name, start_year, pit_or_bat)
     hist = None
     if ha is not None:
@@ -255,20 +221,19 @@ def normalize_batting_by_league_avg(probs, pit_or_bat='b'):
 
 @cache_disk()
 def load_historical_player_handedness(player_name, year='Career', pit_or_bat='b'):
-    idm = retrieve_player_id_map()
-    if player_name in conf.known_player_conversions:
-        player_name = conf.known_player_conversions[player_name]
+    # if player_name in conf.known_player_conversions:
+    #     player_name = conf.known_player_conversions[player_name]
     http = urllib3.PoolManager()
-    if player_name in idm:
+    if player_name in conf.player_id_map.index:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
-                         (idm[player_name], year, pit_or_bat),
+                         (conf.player_id_map.loc[player_name]['bref_id'], year, pit_or_bat),
                          preload_content=False)
     elif player_name in conf.known_player_conversions and\
-            conf.known_player_conversions[player_name] in idm:
+            conf.known_player_conversions[player_name] in conf.player_id_map.index:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/split.cgi?id=%s&year=%s&t=%s' %
-                         (idm[player_name], year, pit_or_bat),
+                         (conf.player_id_map.loc[conf.known_player_conversions[player_name]]['bref_id'], year, pit_or_bat),
                          preload_content=False)
     else:
         print "Player %s not found in Baseball Reference." % player_name
@@ -316,7 +281,7 @@ def load_historical_player_game_logs(player_name, year='2015'):
     u.check_load_player_id_map()
     http = urllib3.PoolManager()
     agg_stats = None
-    if player_name in conf.player_id_map:
+    if player_name in conf.player_id_map.index:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/gl.cgi?' +
                          'id=%s&t=b&year=%s' %
@@ -360,7 +325,7 @@ def load_recent_player_game_logs(player_name):
     u.check_load_player_id_map()
     http = urllib3.PoolManager()
     agg_stats = None
-    if player_name in conf.player_id_map:
+    if player_name in conf.player_id_map.index:
         r = http.urlopen('GET',
                          'http://www.baseball-reference.com/players/gl.cgi?id=%s&t=b&year=2016' %
                          (conf.player_id_map.at[player_name, 'BREFID']),

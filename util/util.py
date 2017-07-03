@@ -152,6 +152,8 @@ def standardize_team_name(name):
 
 def standardize_player_name(name):
     check_load_player_id_map()
+    if name in conf.known_player_conversions.keys():
+        name = conf.known_player_conversions[name]
     if name in conf.player_id_map.index:
         return name
     elif name in conf.player_id_map['cbs_name'].values:
@@ -186,8 +188,6 @@ def standardize_player_name(name):
     else:
         print "Unable to standardize the name of %s." % name
         return name
-        # return None
-        # raise ValueError("Unable to standardize the name of %s." % name)
 
 
 def get_bbref_name(name):

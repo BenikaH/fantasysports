@@ -32,6 +32,7 @@ def run_simulated_games(away_team_name, home_team_name, game_count=10):
         agg_pitchers.append(pit_stats)
         agg_batters.append(bat_stats)
         game_no += 1
+
     """Convert data to final display format."""
     batters_fanduel = {}
     batters_draftkings = {}
@@ -91,7 +92,6 @@ def play_game(away_team, home_team, starting_inn=1):
         # test for stolen bases, pitcher replacement, etc
         stolen_base = steal_base(gs) # returns index of runner that's attempting
         if stolen_base >= 0:
-            print "STEAL!"
             ran = r.rand()
             # if it's a success, give it to them.  If not, they're out.
             if ran < gs.bases[stolen_base].get_stolen_base_chance()['success']:
